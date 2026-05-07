@@ -31,11 +31,11 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button className="w-full mt-6" size="lg" asChild>
-            <Link href="/">
+          <Link href="/" className="w-full mt-6 block">
+            <Button className="w-full" size="lg" type="button">
               دخول
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </form>
       </div>
     </div>
