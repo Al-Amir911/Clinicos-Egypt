@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Phone, ArrowLeft, CheckCircle2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUpdateAppointmentStatus } from "@/hooks/useQueue";
+import { formatEgyptianPhoneForWhatsApp } from "@/utils/format";
 
 type PatientStatus = "waiting" | "in_clinic" | "completed";
 
@@ -11,6 +12,7 @@ interface QueueCardProps {
   id: string;
   queueNumber: number;
   patientName: string;
+  patientPhone: string;
   visitType: "consultation" | "follow_up";
   status: PatientStatus;
   waitTimeMins: number;
@@ -20,6 +22,7 @@ export function QueueCard({
   id,
   queueNumber,
   patientName,
+  patientPhone,
   visitType,
   status,
   waitTimeMins,
@@ -29,6 +32,16 @@ export function QueueCard({
   const isWaiting = status === "waiting";
   const isInClinic = status === "in_clinic";
   const isCompleted = status === "completed";
+
+  const handleWhatsApp = () => {
+    const formattedPhone = formatEgyptianPhoneForWhatsApp(patientPhone);
+    if (!formattedPhone) return;
+      
+    const clinicLocation = process.env.NEXT_PUBLIC_CLINIC_LOCATION_URL || "https://maps.google.com/";
+    const message = `مرحباً ${patientName}،\nتم تأكيد حجزك في العيادة.\nموقع العيادة: ${clinicLocation}`;
+    
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, "_blank");
+  };
 
   return (
     <Card className={cn(
@@ -86,8 +99,18 @@ export function QueueCard({
           <div className="flex items-center gap-2 mr-4">
             {!isCompleted && (
               <>
-                <Button variant="outline" size="icon" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full">
-                  <Phone className="w-4 h-4" />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className={cn(
+                    "text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full",
+                    !patientPhone && "opacity-50 cursor-not-allowed"
+                  )}
+                  onClick={handleWhatsApp}
+                  disabled={!patientPhone}
+                  title={!patientPhone ? "رقم الهاتف غير متوفر" : "إرسال رسالة واتساب"}
+                >
+                  <MessageCircle className="w-4 h-4" />
                 </Button>
                 {isWaiting ? (
                   <Button size="sm" className="gap-2" onClick={() => updateStatus({ id, status: "in_clinic" })} disabled={isUpdating}>

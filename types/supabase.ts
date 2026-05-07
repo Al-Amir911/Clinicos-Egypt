@@ -159,16 +159,16 @@ export interface Database {
       }
     }
     Views: {
-      [_ in never]: never
+      [key: string]: any
     }
     Functions: {
       get_current_clinic_id: {
-        Args: Record<PropertyKey, never>
+        Args: Record<string, unknown>
         Returns: string
       }
     }
     Enums: {
-      [_ in never]: never
+      [key: string]: any
     }
   }
 }

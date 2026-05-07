@@ -86,15 +86,25 @@ RETURNS UUID AS $$
   SELECT clinic_id FROM profiles WHERE id = auth.uid();
 $$ LANGUAGE sql SECURITY DEFINER;
 
+-- Clinics: Users can read their own clinic
+CREATE POLICY "Users can view their own clinic" 
+  ON clinics FOR SELECT 
+  USING (id = get_current_clinic_id());
+
+CREATE POLICY "Allow authenticated users to create a clinic" 
+  ON clinics FOR INSERT 
+  TO authenticated 
+  WITH CHECK (true);
+
 -- Profiles: Users can read profiles in their clinic
 CREATE POLICY "Users can view profiles in their clinic" 
   ON profiles FOR SELECT 
   USING (clinic_id = get_current_clinic_id());
 
--- Clinics: Users can read their own clinic
-CREATE POLICY "Users can view their own clinic" 
-  ON clinics FOR SELECT 
-  USING (id = get_current_clinic_id());
+CREATE POLICY "Allow users to create their own profile" 
+  ON profiles FOR INSERT 
+  TO authenticated 
+  WITH CHECK (id = auth.uid());
 
 -- Patients: Users can CRUD patients in their clinic
 CREATE POLICY "Users can view patients in their clinic" ON patients FOR SELECT USING (clinic_id = get_current_clinic_id());

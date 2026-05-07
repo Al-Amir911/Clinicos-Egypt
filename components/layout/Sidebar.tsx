@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Wallet, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { name: "الرئيسية", href: "/", icon: LayoutDashboard },
@@ -13,6 +14,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { signOut } = useAuth();
 
   return (
     <aside className="w-64 bg-white border-l border-slate-200 hidden md:flex flex-col h-screen sticky top-0">
@@ -42,7 +44,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-100">
+      <div className="p-4 border-t border-slate-100 space-y-2">
         <Link
           href="/settings"
           className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
@@ -50,6 +52,13 @@ export function Sidebar() {
           <Settings className="w-5 h-5" />
           الإعدادات
         </Link>
+        <button
+          onClick={() => signOut.mutate()}
+          className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          تسجيل الخروج
+        </button>
       </div>
     </aside>
   );

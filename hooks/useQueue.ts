@@ -1,10 +1,33 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 
 export function useQueue() {
-  const supabase = createClient();
+  const supabase: any = createClient();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["appointments"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, supabase]);
 
   return useQuery({
     queryKey: ["appointments"],
@@ -33,7 +56,7 @@ export function useQueue() {
 }
 
 export function useAddPatient() {
-  const supabase = createClient();
+  const supabase: any = createClient();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -95,7 +118,7 @@ export function useAddPatient() {
 }
 
 export function useUpdateAppointmentStatus() {
-  const supabase = createClient();
+  const supabase: any = createClient();
   const queryClient = useQueryClient();
 
   return useMutation({

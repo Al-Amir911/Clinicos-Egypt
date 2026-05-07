@@ -1,3 +1,5 @@
+"use client";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QueueCard } from "./QueueCard";
 import { useQueue } from "@/hooks/useQueue";
@@ -8,8 +10,8 @@ export function QueueList() {
   if (isLoading) return <div className="text-center py-12 text-slate-500">جاري تحميل الطابور...</div>;
   if (error) return <div className="text-center py-12 text-red-500">حدث خطأ في جلب البيانات.</div>;
 
-  const waitingPatients = queue.filter(p => p.status === "waiting" || p.status === "in_clinic");
-  const completedPatients = queue.filter(p => p.status === "completed");
+  const waitingPatients = queue.filter((p: any) => p.status === "waiting" || p.status === "in_clinic");
+  const completedPatients = queue.filter((p: any) => p.status === "completed");
 
   return (
     <div className="space-y-4">
@@ -34,12 +36,13 @@ export function QueueList() {
           {waitingPatients.length === 0 ? (
             <div className="text-center py-12 text-slate-500">لا يوجد مرضى في الانتظار حالياً.</div>
           ) : (
-            waitingPatients.map(appointment => (
+            waitingPatients.map((appointment: any) => (
               <QueueCard 
                 key={appointment.id} 
                 id={appointment.id}
                 queueNumber={appointment.queue_number}
                 patientName={appointment.patient?.name || "مريض غير معروف"}
+                patientPhone={appointment.patient?.phone_number || ""}
                 visitType={appointment.visit_type}
                 status={appointment.status}
                 waitTimeMins={Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
@@ -52,12 +55,13 @@ export function QueueList() {
           {completedPatients.length === 0 ? (
             <div className="text-center py-12 text-slate-500">لم يتم الانتهاء من أي مريض اليوم.</div>
           ) : (
-            completedPatients.map(appointment => (
+            completedPatients.map((appointment: any) => (
               <QueueCard 
                 key={appointment.id} 
                 id={appointment.id}
                 queueNumber={appointment.queue_number}
                 patientName={appointment.patient?.name || "مريض غير معروف"}
+                patientPhone={appointment.patient?.phone_number || ""}
                 visitType={appointment.visit_type}
                 status={appointment.status}
                 waitTimeMins={0}
@@ -67,12 +71,13 @@ export function QueueList() {
         </TabsContent>
         
         <TabsContent value="all" className="space-y-3 mt-0 focus-visible:outline-none focus-visible:ring-0">
-          {queue.map(appointment => (
+          {queue.map((appointment: any) => (
              <QueueCard 
               key={appointment.id} 
               id={appointment.id}
               queueNumber={appointment.queue_number}
               patientName={appointment.patient?.name || "مريض غير معروف"}
+              patientPhone={appointment.patient?.phone_number || ""}
               visitType={appointment.visit_type}
               status={appointment.status}
               waitTimeMins={appointment.status === 'completed' ? 0 : Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
