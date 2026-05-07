@@ -1,6 +1,6 @@
 # Story 2.2: Automated Background Reminders
 
-Status: in-progress
+Status: ready-for-review
 
 ## Story
 
@@ -17,16 +17,16 @@ So that no-shows are reduced without the secretary having to do manual tracking.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Setup Database Webhook for appointment state changes (AC: 1, 2)
-  - [ ] Create a PostgreSQL trigger or configure a Supabase Webhook to monitor `status` updates on the `appointments` table.
-  - [ ] Create a Next.js API route (`app/api/webhooks/supabase/route.ts`) to receive and process the webhook payloads.
-- [ ] Task 2: Implement Evolution API integration logic (AC: 3)
-  - [ ] Implement a query to find the "next in line" patient when the webhook fires.
-  - [ ] Create an Evolution API helper in `utils/evolution.ts` using `EVO_API_URL` and `EVO_API_KEY`.
-  - [ ] Dispatch an automated Arabic reminder (e.g., "استعد، دورك هو التالي!") to the patient's formatted phone number.
-- [ ] Task 3: Update QueueCard UI with a "Notified" indicator (AC: 4)
-  - [ ] Add a `notified` boolean column to the `appointments` table to track reminder status.
-  - [ ] Update `QueueCard.tsx` to conditionally render a small "تم التنبيه" (Notified) checkmark badge if `notified` is true.
+- [x] Task 1: Setup Database Webhook for appointment state changes (AC: 1, 2)
+  - [x] Create a PostgreSQL trigger or configure a Supabase Webhook to monitor `status` updates on the `appointments` table.
+  - [x] Create a Next.js API route (`app/api/webhooks/supabase/route.ts`) to receive and process the webhook payloads.
+- [x] Task 2: Implement Evolution API integration logic (AC: 3)
+  - [x] Implement a query to find the "next in line" patient when the webhook fires.
+  - [x] Create an Evolution API helper in `utils/evolution.ts` using `EVO_API_URL` and `EVO_API_KEY`.
+  - [x] Dispatch an automated Arabic reminder (e.g., "استعد، دورك هو التالي!") to the patient's formatted phone number.
+- [x] Task 3: Update QueueCard UI with a "Notified" indicator (AC: 4)
+  - [x] Add a `notified` boolean column to the `appointments` table to track reminder status.
+  - [x] Update `QueueCard.tsx` to conditionally render a small "تم التنبيه" (Notified) checkmark badge if `notified` is true.
 
 ## Dev Notes
 
