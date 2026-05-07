@@ -31,13 +31,15 @@ export async function POST(req: Request) {
     }
 
     // A patient went in. Find the NEXT patient in the queue.
-    const { data: nextAppointment, error } = await supabase
+    const { data, error } = await supabase
       .from("appointments")
       .select("*, patient:patients(name, phone_number)")
       .eq("status", "waiting")
       .order("queue_number", { ascending: true })
       .limit(1)
       .single();
+      
+    const nextAppointment = data as any;
 
     if (error || !nextAppointment) {
       console.log("No next patient found in waiting queue.");
@@ -69,7 +71,7 @@ export async function POST(req: Request) {
       // Mark as notified in database
       await supabase
         .from("appointments")
-        .update({ notified: true })
+        .update({ notified: true } as any)
         .eq("id", nextAppointment.id);
         
       return NextResponse.json({ success: true, message: "Reminder sent successfully" });

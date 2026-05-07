@@ -23,6 +23,7 @@ export interface Database {
           queue_number: number
           status: string | null
           visit_type: string | null
+          notified: boolean
         }
         Insert: {
           clinic_id: string
@@ -37,6 +38,7 @@ export interface Database {
           queue_number?: number
           status?: string | null
           visit_type?: string | null
+          notified?: boolean
         }
         Update: {
           clinic_id?: string
@@ -51,6 +53,7 @@ export interface Database {
           queue_number?: number
           status?: string | null
           visit_type?: string | null
+          notified?: boolean
         }
       }
       clinics: {
