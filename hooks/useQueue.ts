@@ -1,0 +1,120 @@
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/utils/supabase/client";
+
+export function useQueue() {
+  const supabase = createClient();
+
+  return useQuery({
+    queryKey: ["appointments"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          id,
+          queue_number,
+          status,
+          visit_type,
+          created_at,
+          patient:patients(name, phone_number)
+        `)
+        // Ensure we only get today's appointments in a real app,
+        // but for MVP we fetch all active ones.
+        .order("queue_number", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useAddPatient() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ phone, name, visitType }: { phone: string; name: string; visitType: "consultation" | "follow_up" }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Get the clinic_id for this user
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+      
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      // 1. Find or create patient
+      let patientId;
+      const { data: existingPatient } = await supabase
+        .from("patients")
+        .select("id")
+        .eq("phone_number", phone)
+        .eq("clinic_id", clinic_id)
+        .single();
+
+      if (existingPatient) {
+        patientId = existingPatient.id;
+      } else {
+        const { data: newPatient, error: patientError } = await supabase
+          .from("patients")
+          .insert({ name, phone_number: phone, clinic_id })
+          .select()
+          .single();
+        
+        if (patientError) throw patientError;
+        patientId = newPatient.id;
+      }
+
+      // 2. Create appointment
+      const { data: appointment, error: appointmentError } = await supabase
+        .from("appointments")
+        .insert({
+          clinic_id,
+          patient_id: patientId,
+          visit_type: visitType,
+          status: "waiting"
+        })
+        .select()
+        .single();
+
+      if (appointmentError) throw appointmentError;
+      return appointment;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+  });
+}
+
+export function useUpdateAppointmentStatus() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "waiting" | "in_clinic" | "completed" }) => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .update({ 
+          status,
+          completed_at: status === "completed" ? new Date().toISOString() : null
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+  });
+}

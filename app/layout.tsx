@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description: "Clinic Management System",
 };
 
+import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider";
+import { Toaster } from "@/components/ui/sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,7 +27,12 @@ export default function RootLayout({
       className={`${cairo.variable} font-sans antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-slate-50 flex flex-col">{children}</body>
+      <body className="min-h-screen bg-slate-50 flex flex-col">
+        <ReactQueryProvider>
+          {children}
+        </ReactQueryProvider>
+        <Toaster position="top-center" richColors />
+      </body>
     </html>
   );
 }

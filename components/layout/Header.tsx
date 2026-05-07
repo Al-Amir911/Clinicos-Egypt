@@ -1,7 +1,7 @@
 "use client";
 
-import { Search, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { AddPatientModal } from "@/components/dashboard/AddPatientModal";
 
 export function Header() {
   const today = new Date().toLocaleDateString("ar-EG", {
@@ -29,10 +29,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          إضافة مريض
-        </Button>
+        <AddPatientModal />
       </div>
     </header>
   );

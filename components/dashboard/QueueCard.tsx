@@ -3,10 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Phone, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUpdateAppointmentStatus } from "@/hooks/useQueue";
 
 type PatientStatus = "waiting" | "in_clinic" | "completed";
 
 interface QueueCardProps {
+  id: string;
   queueNumber: number;
   patientName: string;
   visitType: "consultation" | "follow_up";
@@ -15,12 +17,15 @@ interface QueueCardProps {
 }
 
 export function QueueCard({
+  id,
   queueNumber,
   patientName,
   visitType,
   status,
   waitTimeMins,
 }: QueueCardProps) {
+  const { mutate: updateStatus, isPending: isUpdating } = useUpdateAppointmentStatus();
+  
   const isWaiting = status === "waiting";
   const isInClinic = status === "in_clinic";
   const isCompleted = status === "completed";
@@ -85,11 +90,11 @@ export function QueueCard({
                   <Phone className="w-4 h-4" />
                 </Button>
                 {isWaiting ? (
-                  <Button size="sm" className="gap-2">
+                  <Button size="sm" className="gap-2" onClick={() => updateStatus({ id, status: "in_clinic" })} disabled={isUpdating}>
                     دخول للطبيب <ArrowLeft className="w-4 h-4" />
                   </Button>
                 ) : (
-                  <Button size="sm" variant="secondary" className="gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200">
+                  <Button size="sm" variant="secondary" className="gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200" onClick={() => updateStatus({ id, status: "completed" })} disabled={isUpdating}>
                     إنهاء <CheckCircle2 className="w-4 h-4" />
                   </Button>
                 )}

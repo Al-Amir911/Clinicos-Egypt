@@ -1,18 +1,15 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QueueCard } from "./QueueCard";
-
-// Mock data for the MVP presentation
-const mockQueue = [
-  { id: 1, queueNumber: 1, patientName: "محمود عبدالله", visitType: "consultation" as const, status: "completed" as const, waitTimeMins: 0 },
-  { id: 2, queueNumber: 2, patientName: "سارة مصطفى", visitType: "follow_up" as const, status: "in_clinic" as const, waitTimeMins: 5 },
-  { id: 3, queueNumber: 3, patientName: "كريم حسن", visitType: "consultation" as const, status: "waiting" as const, waitTimeMins: 15 },
-  { id: 4, queueNumber: 4, patientName: "نور علي", visitType: "consultation" as const, status: "waiting" as const, waitTimeMins: 22 },
-  { id: 5, queueNumber: 5, patientName: "أحمد سيد", visitType: "follow_up" as const, status: "waiting" as const, waitTimeMins: 40 },
-];
+import { useQueue } from "@/hooks/useQueue";
 
 export function QueueList() {
-  const waitingPatients = mockQueue.filter(p => p.status === "waiting" || p.status === "in_clinic");
-  const completedPatients = mockQueue.filter(p => p.status === "completed");
+  const { data: queue = [] as any[], isLoading, error } = useQueue();
+
+  if (isLoading) return <div className="text-center py-12 text-slate-500">جاري تحميل الطابور...</div>;
+  if (error) return <div className="text-center py-12 text-red-500">حدث خطأ في جلب البيانات.</div>;
+
+  const waitingPatients = queue.filter(p => p.status === "waiting" || p.status === "in_clinic");
+  const completedPatients = queue.filter(p => p.status === "completed");
 
   return (
     <div className="space-y-4">
@@ -29,7 +26,7 @@ export function QueueList() {
             مكتمل ({completedPatients.length})
           </TabsTrigger>
           <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            الكل ({mockQueue.length})
+            الكل ({queue.length})
           </TabsTrigger>
         </TabsList>
         
@@ -37,8 +34,16 @@ export function QueueList() {
           {waitingPatients.length === 0 ? (
             <div className="text-center py-12 text-slate-500">لا يوجد مرضى في الانتظار حالياً.</div>
           ) : (
-            waitingPatients.map(patient => (
-              <QueueCard key={patient.id} {...patient} />
+            waitingPatients.map(appointment => (
+              <QueueCard 
+                key={appointment.id} 
+                id={appointment.id}
+                queueNumber={appointment.queue_number}
+                patientName={appointment.patient?.name || "مريض غير معروف"}
+                visitType={appointment.visit_type}
+                status={appointment.status}
+                waitTimeMins={Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
+              />
             ))
           )}
         </TabsContent>
@@ -47,15 +52,31 @@ export function QueueList() {
           {completedPatients.length === 0 ? (
             <div className="text-center py-12 text-slate-500">لم يتم الانتهاء من أي مريض اليوم.</div>
           ) : (
-            completedPatients.map(patient => (
-              <QueueCard key={patient.id} {...patient} />
+            completedPatients.map(appointment => (
+              <QueueCard 
+                key={appointment.id} 
+                id={appointment.id}
+                queueNumber={appointment.queue_number}
+                patientName={appointment.patient?.name || "مريض غير معروف"}
+                visitType={appointment.visit_type}
+                status={appointment.status}
+                waitTimeMins={0}
+              />
             ))
           )}
         </TabsContent>
         
         <TabsContent value="all" className="space-y-3 mt-0 focus-visible:outline-none focus-visible:ring-0">
-          {mockQueue.map(patient => (
-            <QueueCard key={patient.id} {...patient} />
+          {queue.map(appointment => (
+             <QueueCard 
+              key={appointment.id} 
+              id={appointment.id}
+              queueNumber={appointment.queue_number}
+              patientName={appointment.patient?.name || "مريض غير معروف"}
+              visitType={appointment.visit_type}
+              status={appointment.status}
+              waitTimeMins={appointment.status === 'completed' ? 0 : Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
+            />
           ))}
         </TabsContent>
       </Tabs>
