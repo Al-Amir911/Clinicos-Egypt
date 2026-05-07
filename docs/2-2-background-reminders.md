@@ -1,6 +1,6 @@
 # Story 2.2: Automated Background Reminders
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 

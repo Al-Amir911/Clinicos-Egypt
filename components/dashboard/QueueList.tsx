@@ -45,6 +45,7 @@ export function QueueList() {
                 patientPhone={appointment.patient?.phone_number || ""}
                 visitType={appointment.visit_type}
                 status={appointment.status}
+                notified={appointment.notified}
                 waitTimeMins={Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
               />
             ))
@@ -64,6 +65,7 @@ export function QueueList() {
                 patientPhone={appointment.patient?.phone_number || ""}
                 visitType={appointment.visit_type}
                 status={appointment.status}
+                notified={appointment.notified}
                 waitTimeMins={0}
               />
             ))
@@ -80,6 +82,7 @@ export function QueueList() {
               patientPhone={appointment.patient?.phone_number || ""}
               visitType={appointment.visit_type}
               status={appointment.status}
+              notified={appointment.notified}
               waitTimeMins={appointment.status === 'completed' ? 0 : Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
             />
           ))}

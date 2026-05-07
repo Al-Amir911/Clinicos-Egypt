@@ -16,6 +16,7 @@ interface QueueCardProps {
   visitType: "consultation" | "follow_up";
   status: PatientStatus;
   waitTimeMins: number;
+  notified?: boolean;
 }
 
 export function QueueCard({
@@ -26,6 +27,7 @@ export function QueueCard({
   visitType,
   status,
   waitTimeMins,
+  notified,
 }: QueueCardProps) {
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateAppointmentStatus();
   
@@ -70,6 +72,11 @@ export function QueueCard({
               <Badge variant={visitType === "consultation" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
                 {visitType === "consultation" ? "كشف جديد" : "إعادة"}
               </Badge>
+              {notified && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-600 border-blue-200 gap-1 flex items-center">
+                  <CheckCircle2 className="w-3 h-3" /> تم التنبيه
+                </Badge>
+              )}
               <span className="text-xs text-slate-500 flex items-center gap-1">
                 <ClockIcon /> {waitTimeMins} دقيقة
               </span>

@@ -46,6 +46,7 @@ CREATE TABLE appointments (
   
   -- Queue State
   status TEXT DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_clinic', 'completed', 'cancelled')),
+  notified BOOLEAN NOT NULL DEFAULT false,
   visit_type TEXT DEFAULT 'consultation' CHECK (visit_type IN ('consultation', 'follow_up')),
   queue_number SERIAL, -- Auto-incrementing number
   
