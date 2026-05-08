@@ -14,13 +14,17 @@ export function useQueue() {
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'appointments',
-        },
+        { event: '*', schema: 'public', table: 'appointments' },
         () => {
           queryClient.invalidateQueries({ queryKey: ["appointments"] });
+          queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
         }
       )
       .subscribe();
@@ -259,6 +263,71 @@ export function useUploadPrescription() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+  });
+}
+
+export function useDailyStats() {
+  const supabase: any = createClient();
+
+  return useQuery({
+    queryKey: ["dailyStats"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+      
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      // Get today's date range
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startOfDay = today.toISOString();
+      
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      const endOfDayISO = endOfDay.toISOString();
+
+      // Fetch today's appointments
+      const { data: appointments, error: apptError } = await supabase
+        .from("appointments")
+        .select("id, status")
+        .eq("clinic_id", clinic_id)
+        .gte("created_at", startOfDay)
+        .lte("created_at", endOfDayISO);
+
+      if (apptError) throw apptError;
+
+      // Fetch today's payments
+      const { data: payments, error: paymentError } = await supabase
+        .from("payments")
+        .select("amount, method")
+        .eq("clinic_id", clinic_id)
+        .gte("created_at", startOfDay)
+        .lte("created_at", endOfDayISO);
+
+      if (paymentError) throw paymentError;
+
+      const totalPatients = appointments?.length || 0;
+      const waitingPatients = appointments?.filter((a: any) => a.status === "waiting").length || 0;
+      
+      const totalRevenue = payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+      const cashRevenue = payments?.filter((p: any) => p.method === "cash").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+      const instapayRevenue = payments?.filter((p: any) => p.method === "instapay").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+
+      return {
+        totalPatients,
+        waitingPatients,
+        totalRevenue,
+        cashRevenue,
+        instapayRevenue
+      };
     },
   });
 }
