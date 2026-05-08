@@ -67,7 +67,13 @@ export function QueueCard({
     if (!formattedPhone) return;
 
     const locationUrl = settings?.location_url || "";
-    let message = `مرحباً ${patientName}،\nنود تذكيرك بموعد حجزك اليوم في العيادة.`;
+    
+    let message = "";
+    if (isNearTime) {
+      message = `تذكير بموعد الكشف 🔔\n\nمرحباً ${patientName}،\nنود تذكيرك بموعد حجزك اليوم في العيادة خلال أقل من 30 دقيقة.`;
+    } else {
+      message = `تأكيد الحجز ✅\n\nمرحباً ${patientName}،\nتم تأكيد حجزك بنجاح في العيادة.`;
+    }
 
     if (scheduledTime) {
       const dt = new Date(scheduledTime);
@@ -80,7 +86,7 @@ export function QueueCard({
       message += `\n\n📍 موقع العيادة:\n${locationUrl}`;
     }
     
-    message += `\n\nنرجو الحضور في الموعد المحدد. شكراً لك!`;
+    message += `\n\n${isNearTime ? "نرجو الحضور فوراً لتجنب التأخير. شكراً لك!" : "نرجو الحضور في الموعد المحدد. شكراً لك!"}`;
     
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
