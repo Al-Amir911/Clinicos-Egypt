@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export function useAuth() {
+   
   const supabase: any = createClient();
   const router = useRouter();
 
   const signIn = useMutation({
+     
     mutationFn: async ({ email, password }: any) => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
@@ -22,6 +24,7 @@ export function useAuth() {
   });
 
   const signUp = useMutation({
+     
     mutationFn: async ({ email, password, clinicName, doctorName, fullName }: any) => {
       // 1. Sign up user
       const { data: authData, error: authError } = await supabase.auth.signUp({ 

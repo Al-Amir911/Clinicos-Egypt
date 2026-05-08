@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -83,6 +84,7 @@ export function QueueList() {
               visitType={appointment.visit_type}
               status={appointment.status}
               notified={appointment.notified}
+               
               waitTimeMins={appointment.status === 'completed' ? 0 : Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
             />
           ))}

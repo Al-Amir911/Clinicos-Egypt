@@ -162,6 +162,7 @@ export interface Database {
       }
     }
     Views: {
+       
       [key: string]: any
     }
     Functions: {
@@ -171,6 +172,7 @@ export interface Database {
       }
     }
     Enums: {
+       
       [key: string]: any
     }
   }

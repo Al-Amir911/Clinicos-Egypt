@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       .limit(1)
       .single();
       
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const nextAppointment = data as any;
 
     if (error || !nextAppointment) {

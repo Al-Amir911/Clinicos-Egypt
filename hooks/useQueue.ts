@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 
 export function useQueue() {
+   
   const supabase: any = createClient();
   const queryClient = useQueryClient();
 
@@ -56,6 +57,7 @@ export function useQueue() {
 }
 
 export function useAddPatient() {
+   
   const supabase: any = createClient();
   const queryClient = useQueryClient();
 
@@ -118,6 +120,7 @@ export function useAddPatient() {
 }
 
 export function useUpdateAppointmentStatus() {
+   
   const supabase: any = createClient();
   const queryClient = useQueryClient();
 
