@@ -1,8 +1,8 @@
- 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PaymentModal } from "./PaymentModal";
 import { Phone, ArrowLeft, CheckCircle2, MessageCircle, Camera, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUpdateAppointmentStatus, useUploadPrescription } from "@/hooks/useQueue";
@@ -38,6 +38,7 @@ export function QueueCard({
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateAppointmentStatus();
   const { mutate: uploadPrescription, isPending: isUploading } = useUploadPrescription();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -175,7 +176,7 @@ export function QueueCard({
                     دخول للطبيب <ArrowLeft className="w-4 h-4" />
                   </Button>
                 ) : (
-                  <Button size="sm" variant="secondary" className="gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200" onClick={() => updateStatus({ id, status: "completed" })} disabled={isUpdating}>
+                  <Button size="sm" variant="secondary" className="gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200" onClick={() => setIsPaymentModalOpen(true)} disabled={isUpdating}>
                     إنهاء <CheckCircle2 className="w-4 h-4" />
                   </Button>
                 )}
@@ -185,6 +186,13 @@ export function QueueCard({
 
         </div>
       </CardContent>
+      
+      <PaymentModal 
+        open={isPaymentModalOpen} 
+        onOpenChange={setIsPaymentModalOpen} 
+        appointmentId={id} 
+        patientName={patientName} 
+      />
     </Card>
   );
 }

@@ -148,6 +148,61 @@ export function useUpdateAppointmentStatus() {
   });
 }
 
+export function useLogPayment() {
+  const supabase: any = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, amount, method }: { id: string; amount: number; method: "cash" | "instapay" }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+      
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      // 1. Update appointment
+      const { data: appointment, error: updateError } = await supabase
+        .from("appointments")
+        .update({ 
+          status: "completed",
+          completed_at: new Date().toISOString(),
+          price: amount,
+          is_paid: true,
+          payment_method: method
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // 2. Insert into payments table
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          clinic_id,
+          appointment_id: id,
+          amount,
+          method
+        });
+
+      if (paymentError) throw paymentError;
+
+      return appointment;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      // Invalidate revenue query later if needed
+    },
+  });
+}
+
 export function useUploadPrescription() {
   const supabase: any = createClient();
   const queryClient = useQueryClient();
