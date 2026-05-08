@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Wallet, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, Settings, LogOut, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useProfile } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 const navItems = [
   { name: "الرئيسية", href: "/", icon: LayoutDashboard, isReady: true },
+  { name: "جدول الحجوزات", href: "/calendar", icon: Calendar, isReady: true },
   { name: "المرضى", href: "#", icon: Users, isReady: false },
   { name: "الحسابات", href: "#", icon: Wallet, isReady: false },
 ];

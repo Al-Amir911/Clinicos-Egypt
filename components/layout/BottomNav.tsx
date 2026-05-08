@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Wallet } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "الرئيسية", href: "/", icon: LayoutDashboard },
+  { name: "الجدول", href: "/calendar", icon: Calendar },
   { name: "المرضى", href: "/patients", icon: Users },
   { name: "الحسابات", href: "/finance", icon: Wallet },
 ];

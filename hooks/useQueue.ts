@@ -63,13 +63,40 @@ export function useQueue() {
   });
 }
 
+export function useScheduledAppointments() {
+  const supabase: any = createClient();
+
+  return useQuery({
+    queryKey: ["scheduledAppointments"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          id,
+          status,
+          visit_type,
+          scheduled_time,
+          patient:patients(name, phone_number)
+        `)
+        .not("scheduled_time", "is", null)
+        .order("scheduled_time", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 export function useAddPatient() {
    
   const supabase: any = createClient();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ phone, name, visitType }: { phone: string; name: string; visitType: "consultation" | "follow_up" }) => {
+    mutationFn: async ({ phone, name, visitType, scheduled_time }: { phone: string; name: string; visitType: "consultation" | "follow_up", scheduled_time?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -112,7 +139,8 @@ export function useAddPatient() {
           clinic_id,
           patient_id: patientId,
           visit_type: visitType,
-          status: "waiting"
+          status: "waiting",
+          scheduled_time: scheduled_time || null
         })
         .select()
         .single();

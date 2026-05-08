@@ -17,6 +17,7 @@ const formSchema = z.object({
   phone: z.string().min(11, "يجب أن يكون رقم الهاتف 11 رقماً").max(11, "رقم الهاتف غير صحيح"),
   name: z.string().min(2, "الاسم مطلوب"),
   visitType: z.enum(["consultation", "follow_up"]),
+  scheduled_time: z.string().optional(),
 });
 
 export function AddPatientModal({
@@ -44,6 +45,7 @@ export function AddPatientModal({
       phone: defaultPhone,
       name: defaultName,
       visitType: "consultation",
+      scheduled_time: "",
     },
   });
 
@@ -53,6 +55,7 @@ export function AddPatientModal({
         phone: defaultPhone,
         name: defaultName,
         visitType: "consultation",
+        scheduled_time: "",
       });
     }
   }, [open, defaultName, defaultPhone, reset]);
@@ -130,6 +133,18 @@ export function AddPatientModal({
               )}
             />
             {errors.visitType && <p className="text-xs text-red-500">{errors.visitType.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="scheduled_time">موعد الحجز (اختياري)</Label>
+            <Input
+              id="scheduled_time"
+              type="datetime-local"
+              dir="ltr"
+              className="text-left block"
+              {...register("scheduled_time")}
+            />
+            <p className="text-xs text-slate-500">اتركه فارغاً لإضافته للطابور الحالي مباشرة</p>
           </div>
 
           <div className="pt-4 flex gap-2 w-full">
