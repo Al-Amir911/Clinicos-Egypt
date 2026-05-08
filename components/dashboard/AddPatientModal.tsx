@@ -94,7 +94,9 @@ export function AddPatientModal() {
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر نوع الكشف" />
+                    <SelectValue placeholder="اختر نوع الكشف">
+                      {field.value === "consultation" ? "كشف جديد" : "إعادة"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="consultation">كشف جديد</SelectItem>
