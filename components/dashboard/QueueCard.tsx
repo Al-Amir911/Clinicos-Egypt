@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PaymentModal } from "./PaymentModal";
-import { Phone, ArrowLeft, CheckCircle2, MessageCircle, Camera, FileText, Loader2 } from "lucide-react";
+import { Phone, ArrowLeft, CheckCircle2, MessageCircle, Camera, FileText, Loader2, Clock, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUpdateAppointmentStatus, useUploadPrescription, useSettings } from "@/hooks/useQueue";
 import { formatEgyptianPhoneForWhatsApp } from "@/utils/format";
@@ -45,6 +45,12 @@ export function QueueCard({
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // Reminder Logic: Check if appointment is in the next 30 minutes
+  const isNearTime = scheduledTime && status === "waiting" && (() => {
+    const timeUntil = new Date(scheduledTime).getTime() - Date.now();
+    return timeUntil > 0 && timeUntil <= 30 * 60 * 1000;
+  })();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -61,18 +67,20 @@ export function QueueCard({
     if (!formattedPhone) return;
 
     const locationUrl = settings?.location_url || "";
-    let message = `مرحباً ${patientName}،\nتم تأكيد حجزك في العيادة.`;
+    let message = `مرحباً ${patientName}،\nنود تذكيرك بموعد حجزك اليوم في العيادة.`;
 
     if (scheduledTime) {
       const dt = new Date(scheduledTime);
       const dateStr = dt.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
       const timeStr = dt.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-      message += `\nالتاريخ: ${dateStr}\nالساعة: ${timeStr}`;
+      message += `\n\n📅 التاريخ: ${dateStr}\n⏰ الوقت: ${timeStr}`;
     }
 
     if (locationUrl) {
-      message += `\nموقع العيادة: ${locationUrl}`;
+      message += `\n\n📍 موقع العيادة:\n${locationUrl}`;
     }
+    
+    message += `\n\nنرجو الحضور في الموعد المحدد. شكراً لك!`;
     
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
@@ -113,12 +121,16 @@ export function QueueCard({
                 </Badge>
               )}
               {scheduledTime ? (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-50 text-purple-600 border-purple-200 gap-1 flex items-center">
-                  <ClockIcon /> {new Date(scheduledTime).toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })}
+                <Badge variant="outline" className={cn(
+                  "text-[10px] px-1.5 py-0 gap-1 flex items-center",
+                  isNearTime ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-purple-50 text-purple-600 border-purple-200"
+                )}>
+                  <Clock className="w-3 h-3" /> {new Date(scheduledTime).toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })}
+                  {isNearTime && <span className="mr-1">(اقترب الموعد)</span>}
                 </Badge>
               ) : (
                 <span className="text-xs text-slate-500 flex items-center gap-1">
-                  <ClockIcon /> {waitTimeMins} دقيقة
+                  <Clock className="w-3 h-3" /> {waitTimeMins} دقيقة
                 </span>
               )}
             </div>
@@ -190,20 +202,20 @@ export function QueueCard({
             {!isCompleted && (
               <>
                 <Button 
+                  size="sm" 
                   variant="outline" 
-                  size="icon" 
                   className={cn(
-                    "text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full",
-                    !patientPhone && "opacity-50 cursor-not-allowed"
+                    "w-10 h-10 p-0 rounded-full",
+                    isNearTime ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100" : "text-slate-400 hover:text-primary"
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleWhatsApp();
                   }}
                   disabled={!patientPhone}
-                  title={!patientPhone ? "رقم الهاتف غير متوفر" : "إرسال رسالة واتساب"}
+                  title={isNearTime ? "إرسال تذكير بالموعد" : "إرسال رسالة واتساب"}
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  {isNearTime ? <Bell className="w-4 h-4 animate-bounce" /> : <MessageCircle className="w-4 h-4" />}
                 </Button>
                 {isWaiting ? (
                   <Button size="sm" className="gap-2" onClick={(e) => {
