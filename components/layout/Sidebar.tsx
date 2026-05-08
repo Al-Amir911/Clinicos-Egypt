@@ -11,8 +11,8 @@ import { toast } from "sonner";
 const navItems = [
   { name: "الرئيسية", href: "/", icon: LayoutDashboard, isReady: true },
   { name: "جدول الحجوزات", href: "/calendar", icon: Calendar, isReady: true },
-  { name: "المرضى", href: "#", icon: Users, isReady: false },
-  { name: "الحسابات", href: "#", icon: Wallet, isReady: false },
+  { name: "المرضى", href: "/patients", icon: Users, isReady: true },
+  { name: "الحسابات", href: "/finance", icon: Wallet, isReady: true },
 ];
 
 export function Sidebar() {
