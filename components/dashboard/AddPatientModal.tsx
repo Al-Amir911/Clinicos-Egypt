@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,7 +19,15 @@ const formSchema = z.object({
   visitType: z.enum(["consultation", "follow_up"]),
 });
 
-export function AddPatientModal() {
+export function AddPatientModal({
+  trigger,
+  defaultName = "",
+  defaultPhone = "",
+}: {
+  trigger?: React.ReactNode;
+  defaultName?: string;
+  defaultPhone?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   const {
@@ -33,11 +41,21 @@ export function AddPatientModal() {
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      phone: "",
-      name: "",
+      phone: defaultPhone,
+      name: defaultName,
       visitType: "consultation",
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        phone: defaultPhone,
+        name: defaultName,
+        visitType: "consultation",
+      });
+    }
+  }, [open, defaultName, defaultPhone, reset]);
 
   const { mutateAsync: addPatient } = useAddPatient();
 
@@ -54,9 +72,15 @@ export function AddPatientModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-        <Plus className="w-4 h-4" />
-        إضافة مريض
+      <DialogTrigger asChild>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+            <Plus className="w-4 h-4" />
+            إضافة مريض
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>

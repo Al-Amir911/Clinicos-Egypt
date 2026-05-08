@@ -12,7 +12,7 @@ CREATE TABLE clinics (
   doctor_name TEXT NOT NULL,
   phone TEXT,
   address TEXT,
-  google_maps_url TEXT,
+  location_url TEXT, -- Configurable in Settings Page
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -38,17 +38,21 @@ CREATE TABLE patients (
 -- Indexing for high-speed lookup by phone
 CREATE INDEX idx_patient_phone ON patients(phone_number);
 
+-- Enable pg_trgm extension if not exists for partial text matching
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_patient_name_trgm ON patients USING gin (name gin_trgm_ops);
 -- 4. Appointments (The Queue)
 CREATE TABLE appointments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   clinic_id UUID REFERENCES clinics(id) ON DELETE CASCADE NOT NULL,
   patient_id UUID REFERENCES patients(id) ON DELETE CASCADE NOT NULL,
   
-  -- Queue State
+  -- Queue & Scheduling State
   status TEXT DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_clinic', 'completed', 'cancelled')),
   notified BOOLEAN NOT NULL DEFAULT false,
   visit_type TEXT DEFAULT 'consultation' CHECK (visit_type IN ('consultation', 'follow_up')),
   queue_number SERIAL, -- Auto-incrementing number
+  scheduled_time TIMESTAMP WITH TIME ZONE, -- Used for reservations and Calendar view
   
   -- Finance & Records
   price NUMERIC DEFAULT 0,

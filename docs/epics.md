@@ -51,6 +51,11 @@ FR5: Epic 3 - Media Upload
 FR6: Epic 3 - Payment Ledger
 FR7: Epic 3 - Daily Revenue
 FR8: Epic 2 - WA Automation
+FR9: Epic 4 - Global Search
+FR10: Epic 4 - Calendar View
+FR11: Epic 4 - Settings Page
+FR12: Epic 4 - Directories
+FR13: Epic 4 - Dynamic WA Msgs
 
 ## Epic List
 
@@ -65,6 +70,10 @@ The clinic can eliminate the "WhatsApp Chaos" by sending one-click confirmations
 ### Epic 3: Digital Records & Financial Tracking
 The doctor can instantly digitize handwritten prescriptions via camera upload and completely replace their daily paper ledger with automated revenue tracking.
 **FRs covered:** FR5, FR6, FR7
+
+### Epic 4: Advanced Directory, Scheduling & Settings
+The clinic gains a global search-as-you-type bar, a full Calendar view, dedicated Directory/Ledger pages, and a Settings page to manage location data for dynamic WhatsApp messaging.
+**FRs covered:** FR9, FR10, FR11, FR12, FR13
 
 ## Epic 1: The Core Queue MVP
 
@@ -182,3 +191,73 @@ So that I can reconcile the day's earnings instantly and prevent leakage.
 **When** they look at the summary cards section
 **Then** they should see cards displaying "Total Today", "Cash", and "InstaPay"
 **And** these values should automatically calculate from today's logged payments in real-time.
+
+## Epic 4: Advanced Directory, Scheduling & Settings
+
+The clinic gains a global search-as-you-type bar, a full Calendar view, dedicated Directory/Ledger pages, and a Settings page to manage location data for dynamic WhatsApp messaging.
+
+### Story 4.1: Search-as-you-type & Instant Booking
+
+As a secretary,
+I want a search bar at the top of the application that searches as soon as I type a name or number,
+So that I can quickly find a patient and make a new reservation for them without waiting.
+
+**Acceptance Criteria:**
+
+**Given** the secretary is logged into the application
+**When** they type in the global search bar
+**Then** the system should display matching patients instantly (debounced)
+**And** each result must have a "Book Reservation" button
+**And** clicking this button opens the Add Patient modal pre-filled with the patient's details.
+
+### Story 4.2: Calendar View & Scheduled Appointments
+
+As a secretary,
+I want to see all reservations in a calendar view and assign dates and times to new bookings,
+So that I can manage future appointments, not just today's live queue.
+
+**Acceptance Criteria:**
+
+**Given** the secretary navigates to the Calendar page
+**When** they view the page
+**Then** they see a calendar interface showing all scheduled appointments
+**And** when adding a new patient/reservation, they can specify an Appointment Date and Time (saved as `scheduled_time`).
+
+### Story 4.3: Clinic Settings & Location Management
+
+As a clinic manager,
+I want a Settings page to input and save the clinic's location (e.g., Google Maps link),
+So that our automated messages always send the correct location to patients.
+
+**Acceptance Criteria:**
+
+**Given** a user navigates to the Settings page
+**When** they enter a Google Maps URL and click Save
+**Then** the `location_url` is saved to the `clinics` table in Supabase
+**And** this value is used dynamically by the WhatsApp message generator.
+
+### Story 4.4: Dynamic WhatsApp Messages
+
+As a patient,
+I want my WhatsApp confirmation message to include my appointment date, time, and the correct clinic location,
+So that I don't get lost and know exactly when to arrive.
+
+**Acceptance Criteria:**
+
+**Given** a secretary clicks the WhatsApp confirmation button for an appointment
+**When** the `wa.me` link is generated
+**Then** the pre-filled Arabic message must explicitly include the appointment's `scheduled_time` (Date and Time)
+**And** the message must append the clinic's `location_url` from the Settings.
+
+### Story 4.5: Dedicated Patients Directory & Financial Ledger
+
+As a doctor or clinic manager,
+I want full, dedicated pages for the "Patients Directory" and "Financial Ledger",
+So that I can review all historical patient records and financial data outside of the daily dashboard view.
+
+**Acceptance Criteria:**
+
+**Given** the user navigates using the sidebar
+**When** they click on "Patients Directory" or "Financial Ledger"
+**Then** they are taken to a dedicated page with a comprehensive data table
+**And** the tables support pagination and filtering.

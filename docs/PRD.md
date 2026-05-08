@@ -16,9 +16,14 @@ FR5	Media Upload	Upload/Camera capture of handwritten prescriptions/lab results.
 FR6	Payment Ledger	Log "Amount Paid" and "Method" (Cash vs. InstaPay).	P1
 FR7	Daily Revenue	End-of-day summary card for the Doctor.	P1
 FR8	WA Automation	Headless browser bridge for automated background messages.	P2
+FR9	Global Search	Search-as-you-type for patients (Name/Phone) with a direct "Book" button.	P1
+FR10	Calendar View	Calendar UI to view all reservations; add date/time to patient bookings.	P1
+FR11	Settings Page	Dedicated page to configure clinic details like the location/maps link.	P1
+FR12	Directories	Dedicated pages for "Patients Directory" and "Financial Ledger".	P2
+FR13	Dynamic WA Msgs	WhatsApp messages must explicitly include appointment date, time, and location.	P1
 ________________________________________
 3. Non-Functional Requirements (NFRs)
-•	NFR1: Performance: Page loads and queue updates must occur in < 300ms to compete with the speed of paper.
+•	NFR1: Performance: Page loads, queue updates, and search-as-you-type must occur in < 300ms.
 •	NFR2: Offline-First: Must be a PWA (Progressive Web App) to allow basic data entry during Egypt's frequent internet outages.
 •	NFR3: Security: Data encryption at rest (Supabase) to comply with basic data privacy expectations.
 •	NFR4: Usability: The "Secretary Test"—A new user must be able to book a patient in under 15 seconds without training.
@@ -34,6 +39,13 @@ Epic 2: Communication & Automation
 Epic 3: Records & Finance
 •	Story 6: As a Doctor, I want to snap a photo of my handwritten prescription so I have a digital history without typing.
 •	Story 7: As a Doctor, I want to see how much cash was collected at the end of the day to prevent "leakage."
+•	Story 8: As a Doctor, I want dedicated pages for a full Patients Directory and a Financial Ledger to review historical data.
+
+Epic 4: Advanced Directory, Scheduling & Settings
+•	Story 9: As a Secretary, I want a search-as-you-type bar to instantly find patients and book an appointment with one click.
+•	Story 10: As a Secretary, I want a Calendar view to see all upcoming reservations with their date and time.
+•	Story 11: As a Clinic Manager, I want a Settings page to input the clinic location (Google Maps link).
+•	Story 12: As a Patient, I want my WhatsApp confirmation to explicitly include my appointment date, time, and the correct clinic location.
 ________________________________________
 5. Technical Stack (The "Izi" Stack)
 •	Frontend: Next.js 14, Tailwind CSS, Lucide Icons.
