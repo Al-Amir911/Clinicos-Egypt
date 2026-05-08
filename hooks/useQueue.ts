@@ -431,11 +431,15 @@ export function useUpdateSettings() {
         .from("clinics")
         .update({ location_url })
         .eq("id", clinic_id)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      
+      if (!data || data.length === 0) {
+        throw new Error("لم يتم العثور على العيادة أو لا تملك صلاحية التعديل. تأكد من إعدادات الـ RLS في Supabase.");
+      }
+      
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings"] });
