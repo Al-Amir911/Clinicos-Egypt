@@ -54,12 +54,31 @@ export function useQueue() {
           patient_id,
           patient:patients(name, phone_number)
         `)
-        // Ensure we only get today's appointments in a real app,
-        // but for MVP we fetch all active ones.
+        .order("scheduled_time", { ascending: true, nullsFirst: false })
         .order("queue_number", { ascending: true });
 
       if (error) throw error;
-      return data;
+
+      // Filter to only show today's appointments:
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const todayEnd = todayStart + 24 * 60 * 60 * 1000;
+
+      return (data || [])
+        .filter((apt: any) => {
+          if (apt.scheduled_time) {
+            const st = new Date(apt.scheduled_time).getTime();
+            return st >= todayStart && st < todayEnd;
+          }
+          // Walk-in: show if created today
+          const ct = new Date(apt.created_at).getTime();
+          return ct >= todayStart && ct < todayEnd;
+        })
+        .sort((a: any, b: any) => {
+          const timeA = new Date(a.scheduled_time || a.created_at).getTime();
+          const timeB = new Date(b.scheduled_time || b.created_at).getTime();
+          return timeA - timeB;
+        });
     },
   });
 }
@@ -326,12 +345,21 @@ export function useDailyStats() {
       // Fetch today's appointments
       const { data: appointments, error: apptError } = await supabase
         .from("appointments")
-        .select("id, status")
+        .select("id, status, created_at, scheduled_time")
         .eq("clinic_id", clinic_id)
-        .gte("created_at", startOfDay)
-        .lte("created_at", endOfDayISO);
+        .or(`created_at.gte.${startOfDay},scheduled_time.gte.${startOfDay}`);
 
       if (apptError) throw apptError;
+
+      // Filter to exactly today
+      const todayAppointments = (appointments || []).filter((apt: any) => {
+        if (apt.scheduled_time) {
+          const st = new Date(apt.scheduled_time).getTime();
+          return st >= today.getTime() && st <= endOfDay.getTime();
+        }
+        const ct = new Date(apt.created_at).getTime();
+        return ct >= today.getTime() && ct <= endOfDay.getTime();
+      });
 
       // Fetch today's payments
       const { data: payments, error: paymentError } = await supabase
@@ -343,8 +371,8 @@ export function useDailyStats() {
 
       if (paymentError) throw paymentError;
 
-      const totalPatients = appointments?.length || 0;
-      const waitingPatients = appointments?.filter((a: any) => a.status === "waiting").length || 0;
+      const totalPatients = todayAppointments.length;
+      const waitingPatients = todayAppointments.filter((a: any) => a.status === "waiting" || a.status === "in_clinic").length;
       
       const totalRevenue = payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
       const cashRevenue = payments?.filter((p: any) => p.method === "cash").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;

@@ -107,9 +107,15 @@ export function QueueCard({
                   <CheckCircle2 className="w-3 h-3" /> تم التنبيه
                 </Badge>
               )}
-              <span className="text-xs text-slate-500 flex items-center gap-1">
-                <ClockIcon /> {waitTimeMins} دقيقة
-              </span>
+              {scheduledTime ? (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-50 text-purple-600 border-purple-200 gap-1 flex items-center">
+                  <ClockIcon /> {new Date(scheduledTime).toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })}
+                </Badge>
+              ) : (
+                <span className="text-xs text-slate-500 flex items-center gap-1">
+                  <ClockIcon /> {waitTimeMins} دقيقة
+                </span>
+              )}
             </div>
           </div>
 
