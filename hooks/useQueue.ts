@@ -44,6 +44,9 @@ export function useQueue() {
           status,
           visit_type,
           created_at,
+          notified,
+          prescription_url,
+          patient_id,
           patient:patients(name, phone_number)
         `)
         // Ensure we only get today's appointments in a real app,
@@ -137,6 +140,66 @@ export function useUpdateAppointmentStatus() {
         .single();
 
       if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+  });
+}
+
+export function useUploadPrescription() {
+  const supabase: any = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      file, 
+      appointmentId, 
+      patientId 
+    }: { 
+      file: File; 
+      appointmentId: string; 
+      patientId: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+      
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      // Upload to clinic-records bucket
+      const filePath = `${clinic_id}/${patientId}/${appointmentId}.jpg`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("clinic-records")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("clinic-records")
+        .getPublicUrl(filePath);
+
+      // Update appointment
+      const { data, error: updateError } = await supabase
+        .from("appointments")
+        .update({ prescription_url: publicUrl })
+        .eq("id", appointmentId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
       return data;
     },
     onSuccess: () => {

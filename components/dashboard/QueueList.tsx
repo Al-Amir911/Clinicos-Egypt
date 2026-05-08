@@ -44,6 +44,8 @@ export function QueueList() {
                 queueNumber={appointment.queue_number}
                 patientName={appointment.patient?.name || "مريض غير معروف"}
                 patientPhone={appointment.patient?.phone_number || ""}
+                patientId={appointment.patient_id}
+                prescriptionUrl={appointment.prescription_url}
                 visitType={appointment.visit_type}
                 status={appointment.status}
                 notified={appointment.notified}
@@ -64,6 +66,8 @@ export function QueueList() {
                 queueNumber={appointment.queue_number}
                 patientName={appointment.patient?.name || "مريض غير معروف"}
                 patientPhone={appointment.patient?.phone_number || ""}
+                patientId={appointment.patient_id}
+                prescriptionUrl={appointment.prescription_url}
                 visitType={appointment.visit_type}
                 status={appointment.status}
                 notified={appointment.notified}
@@ -81,6 +85,8 @@ export function QueueList() {
               queueNumber={appointment.queue_number}
               patientName={appointment.patient?.name || "مريض غير معروف"}
               patientPhone={appointment.patient?.phone_number || ""}
+              patientId={appointment.patient_id}
+              prescriptionUrl={appointment.prescription_url}
               visitType={appointment.visit_type}
               status={appointment.status}
               notified={appointment.notified}

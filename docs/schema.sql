@@ -132,7 +132,7 @@ alter publication supabase_realtime add table appointments;
 -- STORAGE
 -- ====================================================================
 -- Create a new bucket (If it fails, you can create the 'clinic-records' bucket manually in the Storage UI)
-insert into storage.buckets (id, name, public) values ('clinic-records', 'clinic-records', false) ON CONFLICT (id) DO NOTHING;
+insert into storage.buckets (id, name, public) values ('clinic-records', 'clinic-records', true) ON CONFLICT (id) DO NOTHING;
 
 -- Storage RLS: Users can only upload and read files for their clinic
 CREATE POLICY "Users can upload to their clinic folder"

@@ -1,16 +1,18 @@
  
+import { useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, ArrowLeft, CheckCircle2, MessageCircle } from "lucide-react";
+import { Phone, ArrowLeft, CheckCircle2, MessageCircle, Camera, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUpdateAppointmentStatus } from "@/hooks/useQueue";
+import { useUpdateAppointmentStatus, useUploadPrescription } from "@/hooks/useQueue";
 import { formatEgyptianPhoneForWhatsApp } from "@/utils/format";
 
 type PatientStatus = "waiting" | "in_clinic" | "completed";
 
 interface QueueCardProps {
   id: string;
+  patientId: string;
   queueNumber: number;
   patientName: string;
   patientPhone: string;
@@ -18,10 +20,12 @@ interface QueueCardProps {
   status: PatientStatus;
   waitTimeMins: number;
   notified?: boolean;
+  prescriptionUrl?: string | null;
 }
 
 export function QueueCard({
   id,
+  patientId,
   queueNumber,
   patientName,
   patientPhone,
@@ -29,8 +33,18 @@ export function QueueCard({
   status,
   waitTimeMins,
   notified,
+  prescriptionUrl,
 }: QueueCardProps) {
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateAppointmentStatus();
+  const { mutate: uploadPrescription, isPending: isUploading } = useUploadPrescription();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    uploadPrescription({ file, appointmentId: id, patientId });
+  };
   
   const isWaiting = status === "waiting";
   const isInClinic = status === "in_clinic";
@@ -105,6 +119,42 @@ export function QueueCard({
 
           {/* Actions */}
           <div className="flex items-center gap-2 mr-4">
+            {/* Prescription Upload (For In-Clinic or Completed) */}
+            {(isInClinic || isCompleted) && (
+              <>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  capture="environment" 
+                  className="hidden" 
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                />
+                
+                {prescriptionUrl ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                    onClick={() => window.open(prescriptionUrl, "_blank")}
+                  >
+                    <FileText className="w-4 h-4" /> عرض الروشتة
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                    {isUploading ? "جاري الرفع..." : "رفع روشتة"}
+                  </Button>
+                )}
+              </>
+            )}
+
             {!isCompleted && (
               <>
                 <Button 
