@@ -21,6 +21,10 @@ export function useAuth() {
       toast.success("تم تسجيل الدخول بنجاح");
       router.push("/");
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (error: any) => {
+      toast.error(error.message || "فشل تسجيل الدخول. يرجى التحقق من بياناتك.");
+    }
   });
 
   const signUp = useMutation({
@@ -60,6 +64,11 @@ export function useAuth() {
       toast.success("تم إنشاء الحساب بنجاح! جاري التوجيه...");
       router.push("/");
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (error: any) => {
+      console.error("Signup Error:", error);
+      toast.error(error.message || "حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات.");
+    }
   });
 
   const signOut = useMutation({
