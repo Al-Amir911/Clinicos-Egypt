@@ -194,15 +194,17 @@ export function EditAppointmentModal({
             </Button>
             
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </AlertDialogTrigger>
+              <AlertDialogTrigger 
+                render={
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                }
+              />
               <AlertDialogContent dir="rtl">
                 <AlertDialogHeader>
                   <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
