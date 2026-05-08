@@ -342,24 +342,14 @@ export function useDailyStats() {
       endOfDay.setHours(23, 59, 59, 999);
       const endOfDayISO = endOfDay.toISOString();
 
-      // Fetch today's appointments
-      const { data: appointments, error: apptError } = await supabase
+      // Fetch today's appointments with precise SQL filtering
+      const { data: todayAppointments, error: apptError } = await supabase
         .from("appointments")
-        .select("id, status, created_at, scheduled_time")
+        .select("id, status")
         .eq("clinic_id", clinic_id)
-        .or(`created_at.gte.${startOfDay},scheduled_time.gte.${startOfDay}`);
+        .or(`and(created_at.gte.${startOfDay},created_at.lte.${endOfDayISO}),and(scheduled_time.gte.${startOfDay},scheduled_time.lte.${endOfDayISO})`);
 
       if (apptError) throw apptError;
-
-      // Filter to exactly today
-      const todayAppointments = (appointments || []).filter((apt: any) => {
-        if (apt.scheduled_time) {
-          const st = new Date(apt.scheduled_time).getTime();
-          return st >= today.getTime() && st <= endOfDay.getTime();
-        }
-        const ct = new Date(apt.created_at).getTime();
-        return ct >= today.getTime() && ct <= endOfDay.getTime();
-      });
 
       // Fetch today's payments
       const { data: payments, error: paymentError } = await supabase
@@ -473,7 +463,14 @@ export function useUpdateAppointmentDetails() {
       visitType?: string; 
       scheduled_time?: string | null 
     }) => {
-      // 1. Update patient info if provided
+      // 1. Get current patient state for potential rollback
+      const { data: originalPatient } = await supabase
+        .from("patients")
+        .select("name, phone_number")
+        .eq("id", patientId)
+        .single();
+
+      // 2. Update patient info
       if (name || phone) {
         const { error: patientError } = await supabase
           .from("patients")
@@ -483,7 +480,7 @@ export function useUpdateAppointmentDetails() {
         if (patientError) throw patientError;
       }
 
-      // 2. Update appointment info
+      // 3. Update appointment info
       const { data, error } = await supabase
         .from("appointments")
         .update({ 
@@ -494,7 +491,16 @@ export function useUpdateAppointmentDetails() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Simple rollback: revert patient info if appointment update fails
+        if (originalPatient && (name || phone)) {
+          await supabase
+            .from("patients")
+            .update({ name: originalPatient.name, phone_number: originalPatient.phone_number })
+            .eq("id", patientId);
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

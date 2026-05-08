@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Save, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateAppointmentDetails, useDeleteAppointment } from "@/hooks/useQueue";
 
@@ -44,14 +45,20 @@ export function EditAppointmentModal({
   // Format the date for the datetime-local input (YYYY-MM-DDTHH:mm)
   const formatForInput = (isoString?: string | null) => {
     if (!isoString) return "";
-    const date = new Date(isoString);
-    // Adjust for timezone offset to get the correct "local" string for the input
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    try {
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return "";
+      
+      // Adjust for timezone offset to get the correct "local" string for the input
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (e) {
+      return "";
+    }
   };
 
   const {
@@ -99,8 +106,6 @@ export function EditAppointmentModal({
   };
 
   const handleDelete = async () => {
-    if (!confirm("هل أنت متأكد من رغبتك في حذف هذا الحجز؟")) return;
-    
     try {
       await deleteAppointment(appointment.id);
       toast.success("تم حذف الحجز بنجاح");
@@ -175,18 +180,44 @@ export function EditAppointmentModal({
           </div>
 
           <div className="pt-6 flex gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => onOpenChange(false)}
+            >
+              إلغاء
+            </Button>
             <Button type="submit" className="flex-1 gap-2" disabled={isSubmitting}>
               <Save className="w-4 h-4" />
               حفظ التعديلات
             </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-              onClick={handleDelete}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent dir="rtl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    سيتم حذف هذا الحجز نهائياً من الطابور. لا يمكن التراجع عن هذا الإجراء.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2">
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                    تأكيد الحذف
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </form>
       </DialogContent>

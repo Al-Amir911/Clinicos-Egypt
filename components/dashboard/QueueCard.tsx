@@ -80,7 +80,7 @@ export function QueueCard({
   return (
     <Card 
       className={cn(
-        "overflow-hidden transition-all hover:shadow-md cursor-pointer",
+        "overflow-hidden transition-all hover:shadow-md cursor-pointer active:scale-[0.99] active:shadow-inner",
         isInClinic && "border-primary shadow-sm",
         isCompleted && "opacity-75 bg-slate-50"
       )}
