@@ -7,6 +7,7 @@ import { Phone, ArrowLeft, CheckCircle2, MessageCircle, Camera, FileText, Loader
 import { cn } from "@/lib/utils";
 import { useUpdateAppointmentStatus, useUploadPrescription, useSettings } from "@/hooks/useQueue";
 import { formatEgyptianPhoneForWhatsApp } from "@/utils/format";
+import { EditAppointmentModal } from "./EditAppointmentModal";
 
 type PatientStatus = "waiting" | "in_clinic" | "completed";
 
@@ -42,6 +43,7 @@ export function QueueCard({
   const { data: settings } = useSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,11 +78,14 @@ export function QueueCard({
   };
 
   return (
-    <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-md",
-      isInClinic && "border-primary shadow-sm",
-      isCompleted && "opacity-75 bg-slate-50"
-    )}>
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all hover:shadow-md cursor-pointer",
+        isInClinic && "border-primary shadow-sm",
+        isCompleted && "opacity-75 bg-slate-50"
+      )}
+      onClick={() => setIsEditModalOpen(true)}
+    >
       <CardContent className="p-0">
         <div className="flex items-center p-4 gap-4">
           
@@ -157,7 +162,10 @@ export function QueueCard({
                     variant="outline" 
                     size="sm"
                     className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
-                    onClick={() => window.open(prescriptionUrl, "_blank")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(prescriptionUrl, "_blank");
+                    }}
                   >
                     <FileText className="w-4 h-4" /> عرض الروشتة
                   </Button>
@@ -166,7 +174,10 @@ export function QueueCard({
                     variant="outline" 
                     size="sm"
                     className="gap-2"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
                     disabled={isUploading}
                   >
                     {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
@@ -185,18 +196,27 @@ export function QueueCard({
                     "text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full",
                     !patientPhone && "opacity-50 cursor-not-allowed"
                   )}
-                  onClick={handleWhatsApp}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWhatsApp();
+                  }}
                   disabled={!patientPhone}
                   title={!patientPhone ? "رقم الهاتف غير متوفر" : "إرسال رسالة واتساب"}
                 >
                   <MessageCircle className="w-4 h-4" />
                 </Button>
                 {isWaiting ? (
-                  <Button size="sm" className="gap-2" onClick={() => updateStatus({ id, status: "in_clinic" })} disabled={isUpdating}>
+                  <Button size="sm" className="gap-2" onClick={(e) => {
+                    e.stopPropagation();
+                    updateStatus({ id, status: "in_clinic" });
+                  }} disabled={isUpdating}>
                     دخول للطبيب <ArrowLeft className="w-4 h-4" />
                   </Button>
                 ) : (
-                  <Button size="sm" variant="secondary" className="gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200" onClick={() => setIsPaymentModalOpen(true)} disabled={isUpdating}>
+                  <Button size="sm" variant="secondary" className="gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200" onClick={(e) => {
+                    e.stopPropagation();
+                    setIsPaymentModalOpen(true);
+                  }} disabled={isUpdating}>
                     إنهاء <CheckCircle2 className="w-4 h-4" />
                   </Button>
                 )}
@@ -212,6 +232,19 @@ export function QueueCard({
         onOpenChange={setIsPaymentModalOpen} 
         appointmentId={id} 
         patientName={patientName} 
+      />
+
+      <EditAppointmentModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        appointment={{
+          id,
+          patientId,
+          patientName,
+          patientPhone,
+          visitType,
+          scheduledTime,
+        }}
       />
     </Card>
   );

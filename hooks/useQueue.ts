@@ -452,3 +452,74 @@ export function useUpdateSettings() {
     },
   });
 }
+
+export function useUpdateAppointmentDetails() {
+  const supabase: any = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      id, 
+      patientId,
+      name, 
+      phone, 
+      visitType, 
+      scheduled_time 
+    }: { 
+      id: string; 
+      patientId: string;
+      name?: string; 
+      phone?: string; 
+      visitType?: string; 
+      scheduled_time?: string | null 
+    }) => {
+      // 1. Update patient info if provided
+      if (name || phone) {
+        const { error: patientError } = await supabase
+          .from("patients")
+          .update({ name, phone_number: phone })
+          .eq("id", patientId);
+        
+        if (patientError) throw patientError;
+      }
+
+      // 2. Update appointment info
+      const { data, error } = await supabase
+        .from("appointments")
+        .update({ 
+          visit_type: visitType,
+          scheduled_time: scheduled_time
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
+    },
+  });
+}
+
+export function useDeleteAppointment() {
+  const supabase: any = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("appointments")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
+    },
+  });
+}

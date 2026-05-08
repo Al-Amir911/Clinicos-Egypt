@@ -64,7 +64,13 @@ export function AddPatientModal({
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      await addPatient(data);
+      // Ensure scheduled_time is sent as a proper ISO string with timezone context
+      const payload = {
+        ...data,
+        scheduled_time: data.scheduled_time ? new Date(data.scheduled_time).toISOString() : undefined
+      };
+      
+      await addPatient(payload as any);
       toast.success("تمت إضافة المريض للطابور بنجاح");
       setOpen(false);
       reset();
