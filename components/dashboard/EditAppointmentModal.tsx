@@ -180,17 +180,16 @@ export function EditAppointmentModal({
           </div>
 
           <div className="pt-6 flex gap-2">
-            <DialogClose 
-              render={
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-              }
-            />
+            <DialogClose>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => onOpenChange(false)}
+              >
+                إلغاء
+              </Button>
+            </DialogClose>
             <Button type="submit" className="flex-1 gap-2" disabled={isSubmitting}>
               <Save className="w-4 h-4" />
               حفظ التعديلات
