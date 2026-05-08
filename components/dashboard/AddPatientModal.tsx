@@ -27,6 +27,7 @@ export function AddPatientModal() {
     handleSubmit,
     setValue,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,7 +59,7 @@ export function AddPatientModal() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-right">إضافة مريض للطابور</DialogTitle>
+          <DialogTitle className="text-right pr-6">إضافة مريض للطابور</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
           
@@ -86,7 +87,7 @@ export function AddPatientModal() {
 
           <div className="space-y-2">
             <Label>نوع الكشف</Label>
-            <Select onValueChange={(val: any) => setValue("visitType", val)} defaultValue="consultation">
+            <Select onValueChange={(val: any) => setValue("visitType", val)} value={watch("visitType")}>
               <SelectTrigger>
                 <SelectValue placeholder="اختر نوع الكشف" />
               </SelectTrigger>
