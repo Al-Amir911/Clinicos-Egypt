@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -28,6 +28,7 @@ export function AddPatientModal() {
     setValue,
     reset,
     watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -87,15 +88,21 @@ export function AddPatientModal() {
 
           <div className="space-y-2">
             <Label>نوع الكشف</Label>
-            <Select onValueChange={(val: any) => setValue("visitType", val)} value={watch("visitType")}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر نوع الكشف" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="consultation">كشف جديد</SelectItem>
-                <SelectItem value="follow_up">إعادة</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              control={control}
+              name="visitType"
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر نوع الكشف" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="consultation">كشف جديد</SelectItem>
+                    <SelectItem value="follow_up">إعادة</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.visitType && <p className="text-xs text-red-500">{errors.visitType.message}</p>}
           </div>
 

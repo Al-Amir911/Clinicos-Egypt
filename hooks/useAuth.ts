@@ -37,13 +37,13 @@ export function useAuth() {
       });
       if (authError) throw authError;
       if (!authData.user) throw new Error("فشل إنشاء الحساب");
+      if (!authData.session) throw new Error("يرجى إيقاف خاصية (Confirm Email) من إعدادات Supabase Authentication والمحاولة بإيميل جديد.");
 
       // 2. Insert clinic
-      const { data: clinicData, error: clinicError } = await supabase
+      const clinic_id = crypto.randomUUID();
+      const { error: clinicError } = await supabase
         .from("clinics")
-        .insert({ name: clinicName, doctor_name: doctorName })
-        .select()
-        .single();
+        .insert({ id: clinic_id, name: clinicName, doctor_name: doctorName });
       
       if (clinicError) throw clinicError;
 
@@ -52,7 +52,7 @@ export function useAuth() {
         .from("profiles")
         .insert({
           id: authData.user.id,
-          clinic_id: clinicData.id,
+          clinic_id: clinic_id,
           role: "doctor",
           full_name: fullName
         });
