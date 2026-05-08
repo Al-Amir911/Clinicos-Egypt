@@ -37,11 +37,11 @@ export function QueueList() {
           {waitingPatients.length === 0 ? (
             <div className="text-center py-12 text-slate-500">لا يوجد مرضى في الانتظار حالياً.</div>
           ) : (
-            waitingPatients.map((appointment: any) => (
+            waitingPatients.map((appointment: any, index: number) => (
               <QueueCard 
                 key={appointment.id} 
                 id={appointment.id}
-                queueNumber={appointment.queue_number}
+                queueNumber={index + 1}
                 patientName={appointment.patient?.name || "مريض غير معروف"}
                 patientPhone={appointment.patient?.phone_number || ""}
                 patientId={appointment.patient_id}
@@ -60,11 +60,11 @@ export function QueueList() {
           {completedPatients.length === 0 ? (
             <div className="text-center py-12 text-slate-500">لم يتم الانتهاء من أي مريض اليوم.</div>
           ) : (
-            completedPatients.map((appointment: any) => (
+            completedPatients.map((appointment: any, index: number) => (
               <QueueCard 
                 key={appointment.id} 
                 id={appointment.id}
-                queueNumber={appointment.queue_number}
+                queueNumber={index + 1}
                 patientName={appointment.patient?.name || "مريض غير معروف"}
                 patientPhone={appointment.patient?.phone_number || ""}
                 patientId={appointment.patient_id}
@@ -80,11 +80,11 @@ export function QueueList() {
         </TabsContent>
         
         <TabsContent value="all" className="space-y-3 mt-0 focus-visible:outline-none focus-visible:ring-0">
-          {queue.map((appointment: any) => (
+          {queue.map((appointment: any, index: number) => (
              <QueueCard 
               key={appointment.id} 
               id={appointment.id}
-              queueNumber={appointment.queue_number}
+              queueNumber={index + 1}
               patientName={appointment.patient?.name || "مريض غير معروف"}
               patientPhone={appointment.patient?.phone_number || ""}
               patientId={appointment.patient_id}
