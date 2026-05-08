@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -180,14 +180,17 @@ export function EditAppointmentModal({
           </div>
 
           <div className="pt-6 flex gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              إلغاء
-            </Button>
+            <DialogClose 
+              render={
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1"
+                >
+                  إلغاء
+                </Button>
+              }
+            />
             <Button type="submit" className="flex-1 gap-2" disabled={isSubmitting}>
               <Save className="w-4 h-4" />
               حفظ التعديلات
