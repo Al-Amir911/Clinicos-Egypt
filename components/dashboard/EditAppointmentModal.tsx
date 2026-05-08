@@ -122,7 +122,11 @@ export function EditAppointmentModal({
           <DialogTitle className="text-right pr-6">تعديل بيانات الحجز</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          className="space-y-4 mt-4"
+          onClick={(e) => e.stopPropagation()}
+        >
           
           <div className="space-y-2">
             <Label htmlFor="edit-phone">رقم الهاتف</Label>
@@ -180,16 +184,17 @@ export function EditAppointmentModal({
           </div>
 
           <div className="pt-6 flex gap-2">
-            <DialogClose>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => onOpenChange(false)}
-              >
-                إلغاء
-              </Button>
-            </DialogClose>
+            <button 
+              type="button" 
+              className="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenChange(false);
+              }}
+            >
+              إلغاء
+            </button>
             <Button type="submit" className="flex-1 gap-2" disabled={isSubmitting}>
               <Save className="w-4 h-4" />
               حفظ التعديلات
@@ -198,13 +203,13 @@ export function EditAppointmentModal({
             <AlertDialog>
               <AlertDialogTrigger 
                 render={
-                  <Button 
+                  <button 
                     type="button" 
-                    variant="outline" 
-                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                    className="p-2 text-red-600 border border-red-200 rounded-md hover:bg-red-50 hover:text-red-700 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <Trash2 className="w-4 h-4" />
-                  </Button>
+                  </button>
                 }
               />
               <AlertDialogContent dir="rtl">
