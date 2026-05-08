@@ -70,20 +70,20 @@ export function QueueCard({
     
     let message = "";
     if (isNearTime) {
-      message = `تذكير بموعد الكشف 🔔\n\nمرحباً ${patientName}،\nنود تذكيرك بموعد حجزك اليوم في العيادة خلال أقل من 30 دقيقة.`;
+      message = `* تذكير بموعد الكشف *\n\nمرحباً ${patientName}،\nنود تذكيرك بموعد حجزك اليوم في العيادة خلال أقل من 30 دقيقة.`;
     } else {
-      message = `تأكيد الحجز ✅\n\nمرحباً ${patientName}،\nتم تأكيد حجزك بنجاح في العيادة.`;
+      message = `* تأكيد الحجز *\n\nمرحباً ${patientName}،\nتم تأكيد حجزك بنجاح في العيادة.`;
     }
 
     if (scheduledTime) {
       const dt = new Date(scheduledTime);
       const dateStr = dt.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
       const timeStr = dt.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-      message += `\n\n📅 التاريخ: ${dateStr}\n⏰ الوقت: ${timeStr}`;
+      message += `\n\n- التاريخ: ${dateStr}\n- الوقت: ${timeStr}`;
     }
 
     if (locationUrl) {
-      message += `\n\n📍 موقع العيادة:\n${locationUrl}`;
+      message += `\n\n- موقع العيادة:\n${locationUrl}`;
     }
     
     message += `\n\n${isNearTime ? "نرجو الحضور فوراً لتجنب التأخير. شكراً لك!" : "نرجو الحضور في الموعد المحدد. شكراً لك!"}`;
