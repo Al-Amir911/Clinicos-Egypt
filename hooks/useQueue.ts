@@ -359,3 +359,67 @@ export function useDailyStats() {
     },
   });
 }
+
+export function useSettings() {
+  const supabase: any = createClient();
+
+  return useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+      
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      const { data, error } = await supabase
+        .from("clinics")
+        .select("*")
+        .eq("id", clinic_id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpdateSettings() {
+  const supabase: any = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ location_url }: { location_url: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+      
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      const { data, error } = await supabase
+        .from("clinics")
+        .update({ location_url })
+        .eq("id", clinic_id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+    },
+  });
+}
