@@ -50,6 +50,7 @@ export function useQueue() {
           created_at,
           notified,
           prescription_url,
+          scheduled_time,
           patient_id,
           patient:patients(name, phone_number)
         `)

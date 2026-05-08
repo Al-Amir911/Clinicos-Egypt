@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PaymentModal } from "./PaymentModal";
 import { Phone, ArrowLeft, CheckCircle2, MessageCircle, Camera, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUpdateAppointmentStatus, useUploadPrescription } from "@/hooks/useQueue";
+import { useUpdateAppointmentStatus, useUploadPrescription, useSettings } from "@/hooks/useQueue";
 import { formatEgyptianPhoneForWhatsApp } from "@/utils/format";
 
 type PatientStatus = "waiting" | "in_clinic" | "completed";
@@ -21,6 +21,7 @@ interface QueueCardProps {
   waitTimeMins: number;
   notified?: boolean;
   prescriptionUrl?: string | null;
+  scheduledTime?: string | null;
 }
 
 export function QueueCard({
@@ -34,9 +35,11 @@ export function QueueCard({
   waitTimeMins,
   notified,
   prescriptionUrl,
+  scheduledTime,
 }: QueueCardProps) {
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateAppointmentStatus();
   const { mutate: uploadPrescription, isPending: isUploading } = useUploadPrescription();
+  const { data: settings } = useSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
@@ -54,9 +57,20 @@ export function QueueCard({
   const handleWhatsApp = () => {
     const formattedPhone = formatEgyptianPhoneForWhatsApp(patientPhone);
     if (!formattedPhone) return;
-      
-    const clinicLocation = process.env.NEXT_PUBLIC_CLINIC_LOCATION_URL || "https://maps.google.com/";
-    const message = `مرحباً ${patientName}،\nتم تأكيد حجزك في العيادة.\nموقع العيادة: ${clinicLocation}`;
+
+    const locationUrl = settings?.location_url || "";
+    let message = `مرحباً ${patientName}،\nتم تأكيد حجزك في العيادة.`;
+
+    if (scheduledTime) {
+      const dt = new Date(scheduledTime);
+      const dateStr = dt.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+      const timeStr = dt.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+      message += `\nالتاريخ: ${dateStr}\nالساعة: ${timeStr}`;
+    }
+
+    if (locationUrl) {
+      message += `\nموقع العيادة: ${locationUrl}`;
+    }
     
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };

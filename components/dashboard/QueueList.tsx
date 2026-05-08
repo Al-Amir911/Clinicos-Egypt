@@ -49,6 +49,7 @@ export function QueueList() {
                 visitType={appointment.visit_type}
                 status={appointment.status}
                 notified={appointment.notified}
+                scheduledTime={appointment.scheduled_time}
                 waitTimeMins={Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
               />
             ))
@@ -71,6 +72,7 @@ export function QueueList() {
                 visitType={appointment.visit_type}
                 status={appointment.status}
                 notified={appointment.notified}
+                scheduledTime={appointment.scheduled_time}
                 waitTimeMins={0}
               />
             ))
@@ -90,6 +92,7 @@ export function QueueList() {
               visitType={appointment.visit_type}
               status={appointment.status}
               notified={appointment.notified}
+              scheduledTime={appointment.scheduled_time}
                
               waitTimeMins={appointment.status === 'completed' ? 0 : Math.floor((Date.now() - new Date(appointment.created_at).getTime()) / 60000)}
             />
