@@ -176,31 +176,31 @@ export function QueueCard({
                 />
                 
                 {prescriptionUrl ? (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                  <button 
+                    type="button" 
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-blue-200 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       window.open(prescriptionUrl, "_blank");
                     }}
                   >
-                    <FileText className="w-4 h-4" /> عرض الروشتة
-                  </Button>
+                    <FileText className="w-4 h-4" /> <span>عرض الروشتة</span>
+                  </button>
                 ) : (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-2"
+                  <button 
+                    type="button" 
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-slate-200 rounded-md hover:bg-slate-50 transition-colors disabled:opacity-50"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       fileInputRef.current?.click();
                     }}
                     disabled={isUploading}
                   >
                     {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-                    {isUploading ? "جاري الرفع..." : "رفع روشتة"}
-                  </Button>
+                    <span>{isUploading ? "جاري الرفع..." : "رفع روشتة"}</span>
+                  </button>
                 )}
               </>
             )}
