@@ -17,7 +17,7 @@ export default function CalendarPage() {
 
   // Group by date
   const grouped: Record<string, any[]> = {};
-  appointments?.forEach(apt => {
+  appointments?.forEach((apt: any) => {
     const d = new Date(apt.scheduled_time);
     const dateStr = d.toLocaleDateString("ar-EG", {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
