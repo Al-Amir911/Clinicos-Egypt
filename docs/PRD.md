@@ -17,8 +17,8 @@ FR6	Payment Ledger	Log "Amount Paid" and "Method" (Cash vs. InstaPay).	P1
 FR7	Daily Revenue	End-of-day summary card for the Doctor.	P1
 FR8	WA Automation	Headless browser bridge for automated background messages.	P2
 FR9	Global Search	Search-as-you-type for patients (Name/Phone) with a direct "Book" button.	P1
-FR10	Calendar View	Calendar UI to view all reservations; add date/time to patient bookings.	P1
-FR11	Settings Page	Dedicated page to configure clinic details like the location/maps link.	P1
+FR10	Calendar View	Time-Grid Calendar UI showing 30-minute slots based on configurable working hours; click empty slots to instantly book.	P1
+FR11	Settings Page	Dedicated page to configure clinic details (location/maps link) and working hours (start/end time).	P1
 FR12	Directories	Dedicated pages for "Patients Directory" and "Financial Ledger".	P2
 FR13	Dynamic WA Msgs	WhatsApp messages must explicitly include appointment date, time, and location.	P1
 ________________________________________
@@ -43,8 +43,8 @@ Epic 3: Records & Finance
 
 Epic 4: Advanced Directory, Scheduling & Settings
 •	Story 9: As a Secretary, I want a search-as-you-type bar to instantly find patients and book an appointment with one click.
-•	Story 10: As a Secretary, I want a Calendar view to see all upcoming reservations with their date and time.
-•	Story 11: As a Clinic Manager, I want a Settings page to input the clinic location (Google Maps link).
+•	Story 10: As a Secretary, I want a Time-Grid Calendar view with 30-minute slots to see exactly which times are empty and which are booked.
+•	Story 11: As a Clinic Manager, I want a Settings page to input the clinic location and configure working hours (e.g., 9:00 AM to 6:00 PM) for the calendar slots.
 •	Story 12: As a Patient, I want my WhatsApp confirmation to explicitly include my appointment date, time, and the correct clinic location.
 ________________________________________
 5. Technical Stack (The "Izi" Stack)

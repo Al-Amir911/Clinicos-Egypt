@@ -213,28 +213,29 @@ So that I can quickly find a patient and make a new reservation for them without
 ### Story 4.2: Calendar View & Scheduled Appointments
 
 As a secretary,
-I want to see all reservations in a calendar view and assign dates and times to new bookings,
-So that I can manage future appointments, not just today's live queue.
+I want to see all reservations in a Time-Grid Calendar view with 30-minute slots,
+So that I can quickly identify empty slots and manage future appointments.
 
 **Acceptance Criteria:**
 
 **Given** the secretary navigates to the Calendar page
-**When** they view the page
-**Then** they see a calendar interface showing all scheduled appointments
-**And** when adding a new patient/reservation, they can specify an Appointment Date and Time (saved as `scheduled_time`).
+**When** they view a specific date (defaulting to today)
+**Then** they see a vertical time-grid from the clinic's `working_hours_start` to `working_hours_end` in 30-minute increments
+**And** booked appointments are displayed on their respective time slots
+**And** empty slots display a clickable area to "Add Patient" which opens the modal pre-filled with that specific Date and Time.
 
 ### Story 4.3: Clinic Settings & Location Management
 
 As a clinic manager,
-I want a Settings page to input and save the clinic's location (e.g., Google Maps link),
-So that our automated messages always send the correct location to patients.
+I want a Settings page to input the clinic's location and working hours,
+So that automated messages are accurate and the calendar grid renders the correct time boundaries.
 
 **Acceptance Criteria:**
 
 **Given** a user navigates to the Settings page
-**When** they enter a Google Maps URL and click Save
-**Then** the `location_url` is saved to the `clinics` table in Supabase
-**And** this value is used dynamically by the WhatsApp message generator.
+**When** they enter a Google Maps URL, Working Hours Start (e.g., 09:00), and Working Hours End (e.g., 18:00) and click Save
+**Then** these values (`location_url`, `working_hours_start`, `working_hours_end`) are saved to the `clinics` table in Supabase
+**And** the working hours are used to dynamically render the Calendar grid boundaries.
 
 ### Story 4.4: Dynamic WhatsApp Messages
 
