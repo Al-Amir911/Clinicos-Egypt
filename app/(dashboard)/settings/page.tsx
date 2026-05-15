@@ -14,8 +14,8 @@ import { toast } from "sonner";
 
 const formSchema = z.object({
   location_url: z.string().url("رابط خريطة غير صحيح").optional().or(z.literal("")),
-  working_hours_start: z.string().min(1, "مطلوب").default("09:00"),
-  working_hours_end: z.string().min(1, "مطلوب").default("18:00"),
+  working_hours_start: z.string().min(1, "مطلوب"),
+  working_hours_end: z.string().min(1, "مطلوب"),
 });
 
 export default function SettingsPage() {
