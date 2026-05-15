@@ -14,6 +14,8 @@ import { toast } from "sonner";
 
 const formSchema = z.object({
   location_url: z.string().url("رابط خريطة غير صحيح").optional().or(z.literal("")),
+  working_hours_start: z.string().min(1, "مطلوب").default("09:00"),
+  working_hours_end: z.string().min(1, "مطلوب").default("18:00"),
 });
 
 export default function SettingsPage() {
@@ -29,6 +31,8 @@ export default function SettingsPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       location_url: "",
+      working_hours_start: "09:00",
+      working_hours_end: "18:00",
     },
   });
 
@@ -36,13 +40,19 @@ export default function SettingsPage() {
     if (settings) {
       reset({
         location_url: settings.location_url || "",
+        working_hours_start: settings.working_hours_start || "09:00",
+        working_hours_end: settings.working_hours_end || "18:00",
       });
     }
   }, [settings, reset]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      await updateSettings({ location_url: data.location_url || "" });
+      await updateSettings({ 
+        location_url: data.location_url || "",
+        working_hours_start: data.working_hours_start,
+        working_hours_end: data.working_hours_end,
+      });
       toast.success("تم تحديث الإعدادات بنجاح");
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ أثناء التحديث");
@@ -93,6 +103,31 @@ export default function SettingsPage() {
               {errors.location_url && (
                 <p className="text-xs text-red-500">{errors.location_url.message}</p>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="working_hours_start">بداية العمل</Label>
+                <Input
+                  id="working_hours_start"
+                  type="time"
+                  {...register("working_hours_start")}
+                />
+                {errors.working_hours_start && (
+                  <p className="text-xs text-red-500">{errors.working_hours_start.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="working_hours_end">نهاية العمل</Label>
+                <Input
+                  id="working_hours_end"
+                  type="time"
+                  {...register("working_hours_end")}
+                />
+                {errors.working_hours_end && (
+                  <p className="text-xs text-red-500">{errors.working_hours_end.message}</p>
+                )}
+              </div>
             </div>
 
             <Button type="submit" disabled={isPending}>

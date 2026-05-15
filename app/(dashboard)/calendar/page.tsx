@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useScheduledAppointments } from "@/hooks/useQueue";
-import { Loader2, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { useScheduledAppointments, useSettings } from "@/hooks/useQueue";
+import { Loader2, Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { AddPatientModal } from "@/components/dashboard/AddPatientModal";
 
 export default function CalendarPage() {
-  const { data: appointments, isLoading } = useScheduledAppointments();
+  const { data: appointments, isLoading: isLoadingApts } = useScheduledAppointments();
+  const { data: settings, isLoading: isLoadingSettings } = useSettings();
 
   const [selectedDate, setSelectedDate] = useState("");
+
+  const isLoading = isLoadingApts || isLoadingSettings;
 
   if (isLoading) {
     return (
@@ -18,36 +22,58 @@ export default function CalendarPage() {
     );
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const workingHoursStart = settings?.working_hours_start || "09:00";
+  const workingHoursEnd = settings?.working_hours_end || "18:00";
 
-  const filteredAppointments = appointments?.filter((apt: any) => {
-    if (!apt.scheduled_time) return false;
+  // Default to today if no date is selected
+  const activeDate = selectedDate ? new Date(selectedDate) : new Date();
+  activeDate.setHours(0, 0, 0, 0);
+
+  // Generate slots for activeDate
+  const [startHour, startMin] = workingHoursStart.split(":").map(Number);
+  const [endHour, endMin] = workingHoursEnd.split(":").map(Number);
+  
+  const slots: Date[] = [];
+  let currentHour = startHour;
+  let currentMin = startMin;
+
+  while (currentHour < endHour || (currentHour === endHour && currentMin <= endMin)) {
+    const slotTime = new Date(activeDate);
+    slotTime.setHours(currentHour, currentMin, 0, 0);
+    slots.push(slotTime);
+    currentMin += 30;
+    if (currentMin >= 60) {
+      currentMin -= 60;
+      currentHour += 1;
+    }
+  }
+
+  // Map appointments to slots
+  const slotMap = new Map<number, any>();
+  
+  appointments?.forEach((apt: any) => {
+    if (!apt.scheduled_time) return;
     const aptDate = new Date(apt.scheduled_time);
     
-    if (selectedDate) {
-      const pDateStr = `${aptDate.getFullYear()}-${String(aptDate.getMonth() + 1).padStart(2, '0')}-${String(aptDate.getDate()).padStart(2, '0')}`;
-      return pDateStr === selectedDate;
-    } else {
-      const aptDateAtMidnight = new Date(aptDate);
-      aptDateAtMidnight.setHours(0, 0, 0, 0);
-      return aptDateAtMidnight >= today;
+    // Check if it's on activeDate
+    if (
+      aptDate.getFullYear() === activeDate.getFullYear() &&
+      aptDate.getMonth() === activeDate.getMonth() &&
+      aptDate.getDate() === activeDate.getDate()
+    ) {
+      // Round to nearest 30 mins to match slot
+      const aptMins = aptDate.getMinutes();
+      const roundedMins = aptMins >= 15 && aptMins < 45 ? 30 : 0;
+      const roundedHours = aptMins >= 45 ? aptDate.getHours() + 1 : aptDate.getHours();
+      
+      const mappedTime = new Date(aptDate);
+      mappedTime.setHours(roundedHours, roundedMins, 0, 0);
+      slotMap.set(mappedTime.getTime(), apt);
     }
   });
 
-  // Group by date
-  const grouped: Record<string, any[]> = {};
-  filteredAppointments?.forEach((apt: any) => {
-    const d = new Date(apt.scheduled_time);
-    const dateStr = d.toLocaleDateString("ar-EG", {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
-    if (!grouped[dateStr]) grouped[dateStr] = [];
-    grouped[dateStr].push(apt);
-  });
-
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -55,7 +81,7 @@ export default function CalendarPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">جدول الحجوزات</h1>
-            <p className="text-slate-500 text-sm">{selectedDate ? "عرض حجوزات تاريخ محدد" : "عرض حجوزات اليوم والأيام القادمة"}</p>
+            <p className="text-slate-500 text-sm">عرض المواعيد المتاحة والمحجوزة</p>
           </div>
         </div>
         <div className="w-full sm:w-auto flex items-center gap-2">
@@ -64,7 +90,7 @@ export default function CalendarPage() {
               onClick={() => setSelectedDate("")}
               className="text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg transition-colors"
             >
-              العودة للوضع الافتراضي
+              العودة لليوم
             </button>
           )}
           <input
@@ -77,42 +103,40 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {Object.keys(grouped).length === 0 ? (
-        <Card className="border-dashed border-2 shadow-none bg-slate-50/50">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-slate-500">
-            <CalendarIcon className="w-12 h-12 mb-4 text-slate-300" />
-            <p>لا توجد حجوزات مجدولة حالياً</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(grouped).map(([date, apts]) => (
-            <div key={date} className="space-y-4">
-              <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2 border-b pb-2">
-                <CalendarIcon className="w-5 h-5 text-primary" />
-                {date}
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {apts.map((apt) => (
-                  <Card key={apt.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2 border-b pb-2">
+          <CalendarIcon className="w-5 h-5 text-primary" />
+          {activeDate.toLocaleDateString("ar-EG", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </h2>
+        
+        <div className="flex flex-col gap-3">
+          {slots.map((slot) => {
+            const apt = slotMap.get(slot.getTime());
+            const timeStr = slot.toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' });
+            // Format to local datetime-local
+            const offset = slot.getTimezoneOffset() * 60000;
+            const isoString = new Date(slot.getTime() - offset).toISOString().slice(0, 16);
+
+            if (apt) {
+              return (
+                <div key={slot.getTime()} className="flex items-stretch border rounded-lg bg-white overflow-hidden shadow-sm h-20">
+                  <div className="w-24 bg-primary/5 flex items-center justify-center font-bold text-primary border-l border-primary/10">
+                    {timeStr}
+                  </div>
+                  <div className="p-3 flex-1 flex justify-between items-center">
+                     <div>
                         <div className="font-semibold text-slate-900">{apt.patient.name}</div>
-                        <div className="flex items-center text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                          <Clock className="w-3 h-3 ml-1" />
-                          {new Date(apt.scheduled_time).toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                      <div className="text-sm text-slate-500 mb-3">{apt.patient.phone_number}</div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className={`px-2 py-1 rounded-md font-medium ${
+                        <div className="text-sm text-slate-500">{apt.patient.phone_number}</div>
+                     </div>
+                     <div className="flex flex-col items-end gap-1">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                           apt.visit_type === 'consultation' 
                             ? 'bg-blue-50 text-blue-700' 
                             : 'bg-emerald-50 text-emerald-700'
                         }`}>
                           {apt.visit_type === 'consultation' ? 'كشف جديد' : 'إعادة'}
                         </span>
-                        <span className={`px-2 py-1 rounded-md font-medium ${
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                           apt.status === 'completed' 
                             ? 'bg-slate-100 text-slate-600'
                             : 'bg-amber-50 text-amber-700'
@@ -120,14 +144,31 @@ export default function CalendarPage() {
                           {apt.status === 'completed' ? 'مكتمل' : 'قيد الانتظار'}
                         </span>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ))}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <AddPatientModal
+                key={slot.getTime()}
+                defaultScheduledTime={isoString}
+                trigger={
+                  <button className="flex items-stretch border border-dashed border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 overflow-hidden transition-all text-right w-full group h-20">
+                    <div className="w-24 bg-slate-100/50 flex items-center justify-center font-medium text-slate-500 border-l border-slate-200">
+                      {timeStr}
+                    </div>
+                    <div className="p-4 flex-1 flex items-center text-slate-400 group-hover:text-primary transition-colors">
+                      <Plus className="w-5 h-5 ml-2" />
+                      إضافة حجز في هذا الموعد
+                    </div>
+                  </button>
+                }
+              />
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -65,6 +65,8 @@ export interface Database {
           id: string
           name: string
           phone: string | null
+          working_hours_start: string | null
+          working_hours_end: string | null
         }
         Insert: {
           address?: string | null
@@ -74,6 +76,8 @@ export interface Database {
           id?: string
           name: string
           phone?: string | null
+          working_hours_start?: string | null
+          working_hours_end?: string | null
         }
         Update: {
           address?: string | null
@@ -83,6 +87,8 @@ export interface Database {
           id?: string
           name?: string
           phone?: string | null
+          working_hours_start?: string | null
+          working_hours_end?: string | null
         }
       }
       patients: {

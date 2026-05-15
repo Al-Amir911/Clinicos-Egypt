@@ -24,10 +24,12 @@ export function AddPatientModal({
   trigger,
   defaultName = "",
   defaultPhone = "",
+  defaultScheduledTime = "",
 }: {
   trigger?: React.ReactNode;
   defaultName?: string;
   defaultPhone?: string;
+  defaultScheduledTime?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -45,7 +47,7 @@ export function AddPatientModal({
       phone: defaultPhone,
       name: defaultName,
       visitType: "consultation",
-      scheduled_time: "",
+      scheduled_time: defaultScheduledTime,
     },
   });
 
@@ -55,10 +57,10 @@ export function AddPatientModal({
         phone: defaultPhone,
         name: defaultName,
         visitType: "consultation",
-        scheduled_time: "",
+        scheduled_time: defaultScheduledTime,
       });
     }
-  }, [open, defaultName, defaultPhone, reset]);
+  }, [open, defaultName, defaultPhone, defaultScheduledTime, reset]);
 
   const { mutateAsync: addPatient } = useAddPatient();
 
@@ -82,7 +84,7 @@ export function AddPatientModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {trigger ? (
-        <DialogTrigger render={trigger as any} />
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : (
         <DialogTrigger className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
           <Plus className="w-4 h-4" />

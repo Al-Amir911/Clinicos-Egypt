@@ -414,7 +414,7 @@ export function useUpdateSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ location_url }: { location_url: string }) => {
+    mutationFn: async ({ location_url, working_hours_start, working_hours_end }: { location_url: string, working_hours_start: string, working_hours_end: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -429,7 +429,7 @@ export function useUpdateSettings() {
 
       const { data, error } = await supabase
         .from("clinics")
-        .update({ location_url })
+        .update({ location_url, working_hours_start, working_hours_end })
         .eq("id", clinic_id)
         .select();
 
