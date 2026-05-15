@@ -347,7 +347,7 @@ export function useDailyStats() {
         .from("appointments")
         .select("id, status")
         .eq("clinic_id", clinic_id)
-        .or(`and(created_at.gte.${startOfDay},created_at.lte.${endOfDayISO}),and(scheduled_time.gte.${startOfDay},scheduled_time.lte.${endOfDayISO})`);
+        .or(`and(scheduled_time.is.null,created_at.gte.${startOfDay},created_at.lte.${endOfDayISO}),and(scheduled_time.gte.${startOfDay},scheduled_time.lte.${endOfDayISO})`);
 
       if (apptError) throw apptError;
 

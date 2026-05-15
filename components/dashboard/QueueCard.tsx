@@ -52,6 +52,7 @@ export function QueueCard({
   })();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -173,6 +174,7 @@ export function QueueCard({
                   className="hidden" 
                   ref={fileInputRef}
                   onChange={handleFileChange}
+                  onClick={(e) => e.stopPropagation()}
                 />
                 
                 {prescriptionUrl ? (
