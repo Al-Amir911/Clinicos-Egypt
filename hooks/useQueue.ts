@@ -250,7 +250,7 @@ export function useLogPayment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      // Invalidate revenue query later if needed
+      queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
     },
   });
 }
