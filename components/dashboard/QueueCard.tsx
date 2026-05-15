@@ -99,7 +99,9 @@ export function QueueCard({
         isInClinic && "border-primary shadow-sm",
         isCompleted && "opacity-75 bg-slate-50"
       )}
-      onClick={() => setIsEditModalOpen(true)}
+      onClick={() => {
+        if (!isPaymentModalOpen && !isEditModalOpen) setIsEditModalOpen(true);
+      }}
     >
       <CardContent className="p-0">
         <div className="flex items-center p-4 gap-4">
