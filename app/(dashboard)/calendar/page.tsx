@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useScheduledAppointments } from "@/hooks/useQueue";
 import { Loader2, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function CalendarPage() {
   const { data: appointments, isLoading } = useScheduledAppointments();
+
+  const [selectedDate, setSelectedDate] = useState("");
 
   if (isLoading) {
     return (
@@ -15,9 +18,26 @@ export default function CalendarPage() {
     );
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const filteredAppointments = appointments?.filter((apt: any) => {
+    if (!apt.scheduled_time) return false;
+    const aptDate = new Date(apt.scheduled_time);
+    
+    if (selectedDate) {
+      const pDateStr = `${aptDate.getFullYear()}-${String(aptDate.getMonth() + 1).padStart(2, '0')}-${String(aptDate.getDate()).padStart(2, '0')}`;
+      return pDateStr === selectedDate;
+    } else {
+      const aptDateAtMidnight = new Date(aptDate);
+      aptDateAtMidnight.setHours(0, 0, 0, 0);
+      return aptDateAtMidnight >= today;
+    }
+  });
+
   // Group by date
   const grouped: Record<string, any[]> = {};
-  appointments?.forEach((apt: any) => {
+  filteredAppointments?.forEach((apt: any) => {
     const d = new Date(apt.scheduled_time);
     const dateStr = d.toLocaleDateString("ar-EG", {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -28,13 +48,32 @@ export default function CalendarPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-          <CalendarIcon className="w-6 h-6 text-primary" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+            <CalendarIcon className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">جدول الحجوزات</h1>
+            <p className="text-slate-500 text-sm">{selectedDate ? "عرض حجوزات تاريخ محدد" : "عرض حجوزات اليوم والأيام القادمة"}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">جدول الحجوزات</h1>
-          <p className="text-slate-500 text-sm">عرض جميع الحجوزات المجدولة مسبقاً</p>
+        <div className="w-full sm:w-auto flex items-center gap-2">
+          {selectedDate && (
+            <button 
+              onClick={() => setSelectedDate("")}
+              className="text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg transition-colors"
+            >
+              العودة للوضع الافتراضي
+            </button>
+          )}
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="w-full sm:w-48 bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right"
+            dir="rtl"
+          />
         </div>
       </div>
 
