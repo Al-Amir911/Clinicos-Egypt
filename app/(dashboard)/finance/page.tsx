@@ -50,9 +50,19 @@ export default function FinancePage() {
   const { data: payments = [], isLoading } = useAllPayments();
   const [filter, setFilter] = useState("");
 
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+
   const filtered = payments.filter((p: any) => {
     const name = p.appointment?.patient?.name || "";
-    return name.toLowerCase().includes(filter.toLowerCase());
+    const matchesSearch = name.toLowerCase().includes(filter.toLowerCase());
+    
+    const paymentDate = new Date(p.created_at);
+    const pDateStr = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}-${String(paymentDate.getDate()).padStart(2, '0')}`;
+    const matchesDate = !selectedDate || pDateStr === selectedDate;
+
+    return matchesSearch && matchesDate;
   });
 
   const totalRevenue = filtered.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
@@ -101,16 +111,27 @@ export default function FinancePage() {
         </Card>
       </div>
 
-      {/* Filter */}
-      <div className="relative max-w-md">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          placeholder="فلتر بالاسم..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-lg pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-        />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 max-w-2xl">
+        <div className="relative w-full sm:w-2/3">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="فلتر بالاسم..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="w-full bg-white border border-slate-200 rounded-lg pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          />
+        </div>
+        <div className="w-full sm:w-1/3 relative">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right"
+            dir="rtl"
+          />
+        </div>
       </div>
 
       {/* Table */}
