@@ -533,3 +533,26 @@ export function useDeleteAppointment() {
     },
   });
 }
+
+export function useUpdatePatient() {
+  const supabase: any = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, name, phone_number, national_id }: { id: string; name: string; phone_number: string; national_id?: string | null }) => {
+      const { data, error } = await supabase
+        .from("patients")
+        .update({ name, phone_number, national_id })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allPatients"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+  });
+}

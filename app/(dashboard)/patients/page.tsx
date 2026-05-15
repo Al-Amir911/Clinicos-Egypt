@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
-import { Users, Search, Loader2 } from "lucide-react";
+import { Users, Search, Loader2, Pencil, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AddPatientModal } from "@/components/dashboard/AddPatientModal";
+import { EditPatientModal } from "@/components/dashboard/EditPatientModal";
+import { PatientHistoryModal } from "@/components/dashboard/PatientHistoryModal";
 
 function useAllPatients() {
   const supabase: any = createClient();
@@ -41,6 +43,8 @@ function useAllPatients() {
 export default function PatientsPage() {
   const { data: patients = [], isLoading } = useAllPatients();
   const [filter, setFilter] = useState("");
+  const [editPatient, setEditPatient] = useState<any>(null);
+  const [historyPatient, setHistoryPatient] = useState<any>(null);
 
   const filtered = patients.filter((p: any) =>
     p.name?.toLowerCase().includes(filter.toLowerCase()) ||
@@ -107,17 +111,55 @@ export default function PatientsPage() {
                     {new Date(patient.created_at).toLocaleDateString("ar-EG")}
                   </td>
                   <td className="py-3 px-4">
-                    <AddPatientModal
-                      defaultName={patient.name}
-                      defaultPhone={patient.phone_number}
-                      trigger={<Button size="sm" variant="outline" className="h-8">حجز</Button>}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0"
+                        title="تعديل البيانات"
+                        onClick={() => setEditPatient(patient)}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0"
+                        title="سجل الروشتات"
+                        onClick={() => setHistoryPatient(patient)}
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                      </Button>
+                      <AddPatientModal
+                        defaultName={patient.name}
+                        defaultPhone={patient.phone_number}
+                        trigger={<Button size="sm" variant="outline" className="h-8">حجز</Button>}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Edit Patient Modal */}
+      {editPatient && (
+        <EditPatientModal
+          open={!!editPatient}
+          onOpenChange={(open) => { if (!open) setEditPatient(null); }}
+          patient={editPatient}
+        />
+      )}
+
+      {/* Patient History Modal */}
+      {historyPatient && (
+        <PatientHistoryModal
+          open={!!historyPatient}
+          onOpenChange={(open) => { if (!open) setHistoryPatient(null); }}
+          patient={historyPatient}
+        />
       )}
     </div>
   );
