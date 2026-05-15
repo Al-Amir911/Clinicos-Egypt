@@ -24,6 +24,7 @@ export default function CalendarPage() {
 
   const workingHoursStart = settings?.working_hours_start || "09:00";
   const workingHoursEnd = settings?.working_hours_end || "18:00";
+  const slotDuration = settings?.slot_duration || 30;
 
   // Default to today if no date is selected
   const activeDate = selectedDate ? new Date(selectedDate) : new Date();
@@ -41,8 +42,8 @@ export default function CalendarPage() {
     const slotTime = new Date(activeDate);
     slotTime.setHours(currentHour, currentMin, 0, 0);
     slots.push(slotTime);
-    currentMin += 30;
-    if (currentMin >= 60) {
+    currentMin += slotDuration;
+    while (currentMin >= 60) {
       currentMin -= 60;
       currentHour += 1;
     }
@@ -61,16 +62,35 @@ export default function CalendarPage() {
       aptDate.getMonth() === activeDate.getMonth() &&
       aptDate.getDate() === activeDate.getDate()
     ) {
-      // Round to nearest 30 mins to match slot
-      const aptMins = aptDate.getMinutes();
-      const roundedMins = aptMins >= 15 && aptMins < 45 ? 30 : 0;
-      const roundedHours = aptMins >= 45 ? aptDate.getHours() + 1 : aptDate.getHours();
+      const aptTime = aptDate.getTime();
+      let matchedSlot: number | null = null;
       
-      const mappedTime = new Date(aptDate);
-      mappedTime.setHours(roundedHours, roundedMins, 0, 0);
-      slotMap.set(mappedTime.getTime(), apt);
+      for (const slot of slots) {
+        const slotTime = slot.getTime();
+        const nextSlotTime = slotTime + (slotDuration * 60 * 1000);
+        if (aptTime >= slotTime && aptTime < nextSlotTime) {
+          matchedSlot = slotTime;
+          break;
+        }
+      }
+      
+      if (matchedSlot) {
+        slotMap.set(matchedSlot, apt);
+      } else {
+        // Fallback if appointment is outside normal hours
+        const roundedTime = new Date(aptDate);
+        roundedTime.setSeconds(0, 0);
+        slotMap.set(roundedTime.getTime(), apt);
+        // Also add this to slots if it doesn't exist
+        if (!slots.some(s => s.getTime() === roundedTime.getTime())) {
+          slots.push(roundedTime);
+        }
+      }
     }
   });
+
+  // Sort slots just in case we added fallback outside hours
+  slots.sort((a, b) => a.getTime() - b.getTime());
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

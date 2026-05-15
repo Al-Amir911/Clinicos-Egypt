@@ -16,6 +16,7 @@ const formSchema = z.object({
   location_url: z.string().url("رابط خريطة غير صحيح").optional().or(z.literal("")),
   working_hours_start: z.string().min(1, "مطلوب"),
   working_hours_end: z.string().min(1, "مطلوب"),
+  slot_duration: z.string().min(1, "مطلوب"),
 });
 
 export default function SettingsPage() {
@@ -33,6 +34,7 @@ export default function SettingsPage() {
       location_url: "",
       working_hours_start: "09:00",
       working_hours_end: "18:00",
+      slot_duration: "30",
     },
   });
 
@@ -42,6 +44,7 @@ export default function SettingsPage() {
         location_url: settings.location_url || "",
         working_hours_start: settings.working_hours_start || "09:00",
         working_hours_end: settings.working_hours_end || "18:00",
+        slot_duration: settings.slot_duration ? String(settings.slot_duration) : "30",
       });
     }
   }, [settings, reset]);
@@ -52,6 +55,7 @@ export default function SettingsPage() {
         location_url: data.location_url || "",
         working_hours_start: data.working_hours_start,
         working_hours_end: data.working_hours_end,
+        slot_duration: parseInt(data.slot_duration),
       });
       toast.success("تم تحديث الإعدادات بنجاح");
     } catch (error: any) {
@@ -128,6 +132,20 @@ export default function SettingsPage() {
                   <p className="text-xs text-red-500">{errors.working_hours_end.message}</p>
                 )}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="slot_duration">مدة الكشف الافتراضية (بالدقائق)</Label>
+              <Input
+                id="slot_duration"
+                type="number"
+                dir="ltr"
+                className="text-left"
+                {...register("slot_duration")}
+              />
+              {errors.slot_duration && (
+                <p className="text-xs text-red-500">{errors.slot_duration.message}</p>
+              )}
             </div>
 
             <Button type="submit" disabled={isPending}>

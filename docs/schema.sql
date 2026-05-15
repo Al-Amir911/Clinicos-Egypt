@@ -15,6 +15,7 @@ CREATE TABLE clinics (
   location_url TEXT, -- Configurable in Settings Page
   working_hours_start TEXT DEFAULT '09:00',
   working_hours_end TEXT DEFAULT '18:00',
+  slot_duration INTEGER DEFAULT 30,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
