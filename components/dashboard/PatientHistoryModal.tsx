@@ -5,13 +5,23 @@ import { createClient } from "@/utils/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileText, Calendar, Loader2, ImageOff } from "lucide-react";
 
+interface AppointmentHistoryRow {
+  id: string;
+  prescription_url: string | null;
+  visit_type: string | null;
+  created_at: string | null;
+  completed_at: string | null;
+  price: number | null;
+  status: string | null;
+}
+
 function usePatientHistory(patientId: string, enabled: boolean) {
   const supabase = createClient();
 
   return useQuery({
     queryKey: ["patientHistory", patientId],
     enabled,
-    queryFn: async () => {
+    queryFn: async (): Promise<AppointmentHistoryRow[]> => {
       const { data, error } = await supabase
         .from("appointments")
         .select("id, prescription_url, visit_type, created_at, completed_at, price, status")
@@ -20,7 +30,7 @@ function usePatientHistory(patientId: string, enabled: boolean) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data as unknown as AppointmentHistoryRow[]) || [];
     },
   });
 }
@@ -59,12 +69,12 @@ export function PatientHistoryModal({ open, onOpenChange, patient }: PatientHist
             </div>
           ) : (
             history.map((record) => {
-              const date = new Date(record.completed_at || record.created_at);
+              const date = new Date(record.completed_at || record.created_at || Date.now());
               return (
                 <div
                   key={record.id}
                   className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer"
-                  onClick={() => window.open(record.prescription_url, "_blank", "noopener,noreferrer")}
+                  onClick={() => record.prescription_url && window.open(record.prescription_url, "_blank", "noopener,noreferrer")}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">

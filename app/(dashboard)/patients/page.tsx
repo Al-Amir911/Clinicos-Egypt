@@ -10,12 +10,20 @@ import { AddPatientModal } from "@/components/dashboard/AddPatientModal";
 import { EditPatientModal } from "@/components/dashboard/EditPatientModal";
 import { PatientHistoryModal } from "@/components/dashboard/PatientHistoryModal";
 
+interface PatientRow {
+  id: string;
+  name: string;
+  phone_number: string;
+  national_id: string | null;
+  created_at: string | null;
+}
+
 function useAllPatients(searchTerm: string) {
   const supabase = createClient();
 
   return useQuery({
     queryKey: ["allPatients", searchTerm],
-    queryFn: async () => {
+    queryFn: async (): Promise<PatientRow[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -23,7 +31,7 @@ function useAllPatients(searchTerm: string) {
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
-        .single();
+        .single() as { data: { clinic_id: string | null } | null };
 
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
@@ -42,7 +50,7 @@ function useAllPatients(searchTerm: string) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      return (data as PatientRow[]) || [];
     },
   });
 }
@@ -112,7 +120,7 @@ export default function PatientsPage() {
                   <td className="py-3 px-4 text-slate-600" dir="ltr">{patient.phone_number}</td>
                   <td className="py-3 px-4 text-slate-600 hidden sm:table-cell" dir="ltr">{patient.national_id || "—"}</td>
                   <td className="py-3 px-4 text-slate-500 hidden md:table-cell">
-                    {new Date(patient.created_at).toLocaleDateString("ar-EG")}
+                    {patient.created_at ? new Date(patient.created_at).toLocaleDateString("ar-EG") : "—"}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1.5">

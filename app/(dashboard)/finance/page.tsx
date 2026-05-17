@@ -7,12 +7,23 @@ import { Wallet, Search, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+interface PaymentRow {
+  id: string;
+  amount: number;
+  method: string | null;
+  created_at: string | null;
+  appointment: {
+    visit_type: string | null;
+    patient: { name: string; phone_number: string };
+  };
+}
+
 function useAllPayments(selectedDate: string) {
   const supabase = createClient();
 
   return useQuery({
     queryKey: ["allPayments", selectedDate],
-    queryFn: async () => {
+    queryFn: async (): Promise<PaymentRow[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -20,7 +31,7 @@ function useAllPayments(selectedDate: string) {
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
-        .single();
+        .single() as { data: { clinic_id: string | null } | null };
 
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
@@ -55,7 +66,7 @@ function useAllPayments(selectedDate: string) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      return (data as unknown as PaymentRow[]) || [];
     },
   });
 }
