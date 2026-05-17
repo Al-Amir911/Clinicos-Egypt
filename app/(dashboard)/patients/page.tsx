@@ -10,11 +10,11 @@ import { AddPatientModal } from "@/components/dashboard/AddPatientModal";
 import { EditPatientModal } from "@/components/dashboard/EditPatientModal";
 import { PatientHistoryModal } from "@/components/dashboard/PatientHistoryModal";
 
-function useAllPatients() {
-  const supabase: any = createClient();
+function useAllPatients(searchTerm: string) {
+  const supabase = createClient();
 
   return useQuery({
-    queryKey: ["allPatients"],
+    queryKey: ["allPatients", searchTerm],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -28,11 +28,18 @@ function useAllPatients() {
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("patients")
         .select("id, name, phone_number, national_id, created_at")
         .eq("clinic_id", clinic_id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,phone_number.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];
@@ -41,15 +48,12 @@ function useAllPatients() {
 }
 
 export default function PatientsPage() {
-  const { data: patients = [], isLoading } = useAllPatients();
   const [filter, setFilter] = useState("");
+  const { data: patients = [], isLoading } = useAllPatients(filter);
   const [editPatient, setEditPatient] = useState<any>(null);
   const [historyPatient, setHistoryPatient] = useState<any>(null);
 
-  const filtered = patients.filter((p: any) =>
-    p.name?.toLowerCase().includes(filter.toLowerCase()) ||
-    p.phone_number?.includes(filter)
-  );
+  const filtered = patients;
 
   if (isLoading) {
     return (
@@ -102,7 +106,7 @@ export default function PatientsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((patient: any) => (
+              {filtered.map((patient) => (
                 <tr key={patient.id} className="border-b last:border-0 hover:bg-slate-50/50 transition-colors">
                   <td className="py-3 px-4 font-medium text-slate-900">{patient.name}</td>
                   <td className="py-3 px-4 text-slate-600" dir="ltr">{patient.phone_number}</td>

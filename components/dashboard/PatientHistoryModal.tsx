@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { FileText, Calendar, Loader2, ImageOff } from "lucide-react";
 
 function usePatientHistory(patientId: string, enabled: boolean) {
-  const supabase: any = createClient();
+  const supabase = createClient();
 
   return useQuery({
     queryKey: ["patientHistory", patientId],
@@ -58,13 +58,13 @@ export function PatientHistoryModal({ open, onOpenChange, patient }: PatientHist
               <p className="text-sm">لا توجد روشتات مسجلة لهذا المريض</p>
             </div>
           ) : (
-            history.map((record: any) => {
+            history.map((record) => {
               const date = new Date(record.completed_at || record.created_at);
               return (
                 <div
                   key={record.id}
                   className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer"
-                  onClick={() => window.open(record.prescription_url, "_blank")}
+                  onClick={() => window.open(record.prescription_url, "_blank", "noopener,noreferrer")}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">

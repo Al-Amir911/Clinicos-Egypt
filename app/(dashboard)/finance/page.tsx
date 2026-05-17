@@ -7,11 +7,11 @@ import { Wallet, Search, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-function useAllPayments() {
-  const supabase: any = createClient();
+function useAllPayments(selectedDate: string) {
+  const supabase = createClient();
 
   return useQuery({
-    queryKey: ["allPayments"],
+    queryKey: ["allPayments", selectedDate],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -25,20 +25,34 @@ function useAllPayments() {
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("payments")
         .select(`
           id,
           amount,
           method,
           created_at,
-          appointment:appointments(
+          appointment:appointments!inner(
             visit_type,
-            patient:patients(name, phone_number)
+            patient:patients!inner(name, phone_number)
           )
         `)
         .eq("clinic_id", clinic_id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (selectedDate) {
+        const start = new Date(selectedDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(selectedDate);
+        end.setHours(23, 59, 59, 999);
+        
+        query = query
+          .gte("created_at", start.toISOString())
+          .lte("created_at", end.toISOString());
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];
@@ -47,22 +61,16 @@ function useAllPayments() {
 }
 
 export default function FinancePage() {
-  const { data: payments = [], isLoading } = useAllPayments();
-  const [filter, setFilter] = useState("");
-
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [filter, setFilter] = useState("");
+
+  const { data: payments = [], isLoading } = useAllPayments(selectedDate);
 
   const filtered = payments.filter((p: any) => {
     const name = p.appointment?.patient?.name || "";
-    const matchesSearch = name.toLowerCase().includes(filter.toLowerCase());
-    
-    const paymentDate = new Date(p.created_at);
-    const pDateStr = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}-${String(paymentDate.getDate()).padStart(2, '0')}`;
-    const matchesDate = !selectedDate || pDateStr === selectedDate;
-
-    return matchesSearch && matchesDate;
+    return name.toLowerCase().includes(filter.toLowerCase());
   });
 
   const totalRevenue = filtered.reduce((sum: number, p: any) => sum + Number(p.amount), 0);

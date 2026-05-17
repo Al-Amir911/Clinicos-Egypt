@@ -62,29 +62,18 @@ export default function CalendarPage() {
       aptDate.getMonth() === activeDate.getMonth() &&
       aptDate.getDate() === activeDate.getDate()
     ) {
-      const aptTime = aptDate.getTime();
-      let matchedSlot: number | null = null;
+      const aptHour = aptDate.getHours();
+      const aptMin = aptDate.getMinutes();
+      const slotMin = Math.floor(aptMin / slotDuration) * slotDuration;
       
-      for (const slot of slots) {
-        const slotTime = slot.getTime();
-        const nextSlotTime = slotTime + (slotDuration * 60 * 1000);
-        if (aptTime >= slotTime && aptTime < nextSlotTime) {
-          matchedSlot = slotTime;
-          break;
-        }
-      }
+      const matchedTime = new Date(aptDate);
+      matchedTime.setHours(aptHour, slotMin, 0, 0);
       
-      if (matchedSlot) {
-        slotMap.set(matchedSlot, apt);
-      } else {
-        // Fallback if appointment is outside normal hours
-        const roundedTime = new Date(aptDate);
-        roundedTime.setSeconds(0, 0);
-        slotMap.set(roundedTime.getTime(), apt);
-        // Also add this to slots if it doesn't exist
-        if (!slots.some(s => s.getTime() === roundedTime.getTime())) {
-          slots.push(roundedTime);
-        }
+      slotMap.set(matchedTime.getTime(), apt);
+      
+      // If it falls outside normal generated slots, add it
+      if (!slots.some(s => s.getTime() === matchedTime.getTime())) {
+        slots.push(matchedTime);
       }
     }
   });
@@ -133,9 +122,8 @@ export default function CalendarPage() {
           {slots.map((slot) => {
             const apt = slotMap.get(slot.getTime());
             const timeStr = slot.toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' });
-            // Format to local datetime-local
-            const offset = slot.getTimezoneOffset() * 60000;
-            const isoString = new Date(slot.getTime() - offset).toISOString().slice(0, 16);
+            // Format to local datetime-local without timezone math
+            const isoString = `${slot.getFullYear()}-${String(slot.getMonth() + 1).padStart(2, '0')}-${String(slot.getDate()).padStart(2, '0')}T${String(slot.getHours()).padStart(2, '0')}:${String(slot.getMinutes()).padStart(2, '0')}`;
 
             if (apt) {
               return (

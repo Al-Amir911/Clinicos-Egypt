@@ -262,3 +262,54 @@ So that I can review all historical patient records and financial data outside o
 **When** they click on "Patients Directory" or "Financial Ledger"
 **Then** they are taken to a dedicated page with a comprehensive data table
 **And** the tables support pagination and filtering.
+
+## Epic 5: Code Quality & Security Hardening
+
+The codebase needs to be refactored to eliminate critical security vulnerabilities, memory leaks, type safety issues, and performance bottlenecks identified during the adversarial code review.
+
+### Story 5.1: Eliminate Unbounded Data Fetching & Implement Server-Side Filtering
+
+As a developer,
+I want to paginate and filter data server-side (via Supabase queries) rather than fetching entire tables,
+So that the application does not crash the user's browser as the database grows.
+
+**Acceptance Criteria:**
+**Given** the Finance and Patients directory pages
+**When** the user loads the page or searches
+**Then** the `useAllPayments` and `useAllPatients` hooks must pass search parameters to the Supabase query directly
+**And** the query must use `.limit()` or pagination to prevent downloading the entire table.
+
+### Story 5.2: Patch Reverse Tabnabbing Vulnerability
+
+As a user,
+I want prescription URLs to open securely,
+So that my session cannot be hijacked by malicious user-uploaded content.
+
+**Acceptance Criteria:**
+**Given** the PatientHistoryModal
+**When** a user clicks on a prescription record
+**Then** the `window.open` call must be replaced with a secure method, or `noopener noreferrer` must be explicitly defined to prevent `window.opener` exploitation.
+
+### Story 5.3: Enforce Strict Type Safety & Remove `any` Abuse
+
+As a developer,
+I want to use the properly typed Supabase client across all components,
+So that TypeScript can catch runtime errors before they reach production.
+
+**Acceptance Criteria:**
+**Given** all data hooks and components
+**When** `createClient()` is called
+**Then** it must not be cast to `any`
+**And** all data mapping must use the generated Database types instead of `any`.
+
+### Story 5.4: Resolve Network Request Waterfalls & Date Math
+
+As a user,
+I want the application to load fast and handle timezones correctly,
+So that I don't wait for consecutive network calls and my calendar doesn't break during daylight savings.
+
+**Acceptance Criteria:**
+**Given** the data hooks and Calendar
+**When** the app loads
+**Then** the clinic_id should be joined in the query or fetched in parallel if possible, or RLS should handle it transparently
+**And** the Calendar component must use reliable Date string manipulation (like `toISOString`) without manual offset math.
