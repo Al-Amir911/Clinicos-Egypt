@@ -89,13 +89,6 @@ export function EditAppointmentModal({
   }, [open, appointment, reset]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      toast.error("أنت غير متصل بالإنترنت حالياً. لا يمكن تعديل بيانات الحجز في وضع عدم الاتصال.", {
-        description: "يرجى الانتظار حتى يتم إعادة الاتصال بالإنترنت.",
-      });
-      return;
-    }
-
     try {
       await updateAppointment({
         id: appointment.id,
@@ -105,7 +98,12 @@ export function EditAppointmentModal({
         visitType: data.visitType,
         scheduled_time: data.scheduled_time ? new Date(data.scheduled_time).toISOString() : null,
       });
-      toast.success("تم تحديث بيانات الحجز بنجاح");
+      
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        toast.warning("تم حفظ التعديلات محلياً. سيتم المزامنة عند عودة الاتصال بالإنترنت.");
+      } else {
+        toast.success("تم تحديث بيانات الحجز بنجاح");
+      }
       onOpenChange(false);
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ أثناء التحديث");
@@ -113,16 +111,14 @@ export function EditAppointmentModal({
   };
 
   const handleDelete = async () => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      toast.error("أنت غير متصل بالإنترنت حالياً. لا يمكن حذف الحجز في وضع عدم الاتصال.", {
-        description: "يرجى الانتظار حتى يتم إعادة الاتصال بالإنترنت.",
-      });
-      return;
-    }
-
     try {
       await deleteAppointment(appointment.id);
-      toast.success("تم حذف الحجز بنجاح");
+      
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        toast.warning("تم حذف الحجز محلياً. سيتم المزامنة عند عودة الاتصال بالإنترنت.");
+      } else {
+        toast.success("تم حذف الحجز بنجاح");
+      }
       onOpenChange(false);
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ أثناء الحذف");

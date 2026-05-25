@@ -64,7 +64,12 @@ export function EditPatientModal({ open, onOpenChange, patient }: EditPatientMod
         phone_number: data.phone_number,
         national_id: data.national_id || null,
       });
-      toast.success("تم تحديث بيانات المريض بنجاح");
+      
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        toast.warning("تم حفظ تعديلات المريض محلياً. سيتم المزامنة عند عودة الاتصال بالإنترنت.");
+      } else {
+        toast.success("تم تحديث بيانات المريض بنجاح");
+      }
       onOpenChange(false);
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ أثناء التحديث");

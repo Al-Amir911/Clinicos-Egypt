@@ -45,7 +45,12 @@ export function PaymentModal({ open, onOpenChange, appointmentId, patientName }:
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       await logPayment({ id: appointmentId, amount: Number(data.amount), method: data.method });
-      toast.success("تم إنهاء الكشف وتسجيل الدفع بنجاح");
+      
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        toast.warning("تم إنهاء الكشف وتسجيل الدفع محلياً. سيتم المزامنة عند عودة الاتصال بالإنترنت.");
+      } else {
+        toast.success("تم إنهاء الكشف وتسجيل الدفع بنجاح");
+      }
       onOpenChange(false);
       reset();
     } catch (error: any) {

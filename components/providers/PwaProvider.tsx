@@ -34,7 +34,8 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
         await syncOfflineAppointments();
         queryClient.invalidateQueries({ queryKey: ["appointments"] });
         queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
-        toast.success("تمت مزامنة المواعيد المضافة في وضع أوفلاين بنجاح.");
+        queryClient.invalidateQueries({ queryKey: ["allPatients"] });
+        toast.success("تمت مزامنة جميع التعديلات والمواعيد المحلية بنجاح.");
       } catch (err) {
         console.error("Failed to sync offline queue on reconnect:", err);
         toast.error("فشلت بعض عمليات مزامنة البيانات المحلية. سيتم المحاولة لاحقاً.");

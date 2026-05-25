@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 import { Users, Search, Loader2, Pencil, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AddPatientModal } from "@/components/dashboard/AddPatientModal";
 import { EditPatientModal } from "@/components/dashboard/EditPatientModal";
 import { PatientHistoryModal } from "@/components/dashboard/PatientHistoryModal";
+import { getOfflinePatientEdits } from "@/utils/offlineQueue";
 
 interface PatientRow {
   id: string;
@@ -20,37 +21,66 @@ interface PatientRow {
 
 function useAllPatients(searchTerm: string) {
   const supabase = createClient();
+  const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: ["allPatients", searchTerm],
     queryFn: async (): Promise<PatientRow[]> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      let serverPatients: PatientRow[] = [];
+      try {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          throw new Error("Offline status detected");
+        }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("clinic_id")
-        .eq("id", user.id)
-        .single() as { data: { clinic_id: string | null } | null };
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
 
-      const clinic_id = profile?.clinic_id;
-      if (!clinic_id) throw new Error("No clinic associated with user");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("clinic_id")
+          .eq("id", user.id)
+          .single() as { data: { clinic_id: string | null } | null };
 
-      let query = supabase
-        .from("patients")
-        .select("id, name, phone_number, national_id, created_at")
-        .eq("clinic_id", clinic_id)
-        .order("created_at", { ascending: false })
-        .limit(100);
+        const clinic_id = profile?.clinic_id;
+        if (!clinic_id) throw new Error("No clinic associated with user");
 
-      if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,phone_number.ilike.%${searchTerm}%`);
+        let query = supabase
+          .from("patients")
+          .select("id, name, phone_number, national_id, created_at")
+          .eq("clinic_id", clinic_id)
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        if (searchTerm) {
+          query = query.or(`name.ilike.%${searchTerm}%,phone_number.ilike.%${searchTerm}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        serverPatients = (data as PatientRow[]) || [];
+      } catch (err) {
+        console.warn("useAllPatients offline fallback triggered:", err);
+        const cachedData: any = queryClient.getQueryData(["allPatients", searchTerm]) || [];
+        serverPatients = cachedData;
       }
 
-      const { data, error } = await query;
+      // Merge offline patient edits
+      const offlinePatientEdits = getOfflinePatientEdits();
+      const merged = serverPatients.map((patient) => {
+        const edit = offlinePatientEdits.find((e) => e.id === patient.id);
+        if (edit) {
+          return {
+            ...patient,
+            name: edit.name,
+            phone_number: edit.phone_number,
+            national_id: edit.national_id !== undefined ? edit.national_id : patient.national_id,
+          };
+        }
+        return patient;
+      });
 
-      if (error) throw error;
-      return (data as PatientRow[]) || [];
+      return merged;
     },
   });
 }
