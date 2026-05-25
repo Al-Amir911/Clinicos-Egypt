@@ -65,6 +65,13 @@ export function AddPatientModal({
   const { mutateAsync: addPatient } = useAddPatient();
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      toast.error("أنت غير متصل بالإنترنت حالياً. لا يمكن إضافة المرضى في وضع عدم الاتصال.", {
+        description: "يرجى الانتظار حتى يتم إعادة الاتصال بالإنترنت.",
+      });
+      return;
+    }
+
     try {
       // Ensure scheduled_time is sent as a proper ISO string with timezone context
       const payload = {
@@ -143,11 +150,11 @@ export function AddPatientModal({
 
           <div className="space-y-2">
             <Label htmlFor="scheduled_time">موعد الحجز (اختياري)</Label>
-            <Input
+            <input
               id="scheduled_time"
               type="datetime-local"
               dir="ltr"
-              className="text-left block"
+              className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-left block md:text-sm dark:bg-input/30"
               {...register("scheduled_time")}
             />
             <p className="text-xs text-slate-500">اتركه فارغاً لإضافته للطابور الحالي مباشرة</p>
