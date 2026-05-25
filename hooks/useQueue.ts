@@ -53,6 +53,7 @@ export function useQueue() {
 
   return useQuery({
     queryKey: ["appointments"],
+    networkMode: "always",
     queryFn: async () => {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -154,6 +155,7 @@ export function useScheduledAppointments() {
 
   return useQuery({
     queryKey: ["scheduledAppointments"],
+    networkMode: "always",
     queryFn: async () => {
       try {
         if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -191,6 +193,7 @@ export function useAddPatient() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async ({ phone, name, visitType, scheduled_time }: { phone: string; name: string; visitType: "consultation" | "follow_up", scheduled_time?: string }) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         const newOfflineAppt = addOfflineAppointment(name, phone, visitType, scheduled_time);
@@ -257,6 +260,7 @@ export function useUpdateAppointmentStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async ({ id, status }: { id: string; status: "waiting" | "in_clinic" | "completed" }) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         const wasTemp = updateOfflineAppointmentStatus(id, status);
@@ -295,6 +299,7 @@ export function useLogPayment() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async ({ id, amount, method }: { id: string; amount: number; method: "cash" | "instapay" }) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         const wasTemp = logOfflinePayment(id, amount, method);
@@ -366,6 +371,7 @@ export function useUploadPrescription() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async ({ 
       file, 
       appointmentId, 
@@ -424,6 +430,7 @@ export function useDailyStats() {
 
   return useQuery({
     queryKey: ["dailyStats"],
+    networkMode: "always",
     queryFn: async () => {
       let stats = {
         totalPatients: 0,
@@ -578,6 +585,7 @@ export function useSettings() {
 
   return useQuery({
     queryKey: ["settings"],
+    networkMode: "always",
     queryFn: async () => {
       try {
         if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -618,6 +626,7 @@ export function useUpdateSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async ({ location_url, working_hours_start, working_hours_end, slot_duration }: { location_url: string, working_hours_start: string, working_hours_end: string, slot_duration?: number }) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         throw new Error("لا يمكن تعديل الإعدادات في وضع عدم الاتصال بالإنترنت.");
@@ -660,6 +669,7 @@ export function useUpdateAppointmentDetails() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async ({ 
       id, 
       patientId,
@@ -738,6 +748,7 @@ export function useDeleteAppointment() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async (id: string) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         const wasTemp = deleteOfflineAppointmentLocal(id);
@@ -766,6 +777,7 @@ export function useUpdatePatient() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
     mutationFn: async ({ id, name, phone_number, national_id }: { id: string; name: string; phone_number: string; national_id?: string | null }) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         addOfflinePatientEdit({ id, name, phone_number, national_id });

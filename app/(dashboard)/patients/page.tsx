@@ -25,6 +25,7 @@ function useAllPatients(searchTerm: string) {
 
   return useQuery({
     queryKey: ["allPatients", searchTerm],
+    networkMode: "always",
     queryFn: async (): Promise<PatientRow[]> => {
       let serverPatients: PatientRow[] = [];
       try {
