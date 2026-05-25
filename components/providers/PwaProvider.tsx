@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { syncOfflineAppointments } from "@/utils/offlineQueue";
 
 export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // 1. Register Service Worker
@@ -20,18 +23,28 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. Track Network Status
-    const handleOnline = () => {
+    const handleOnline = async () => {
       setIsOnline(true);
-      toast.success("تم إعادة الاتصال بالإنترنت بنجاح. تم مزامنة التغييرات تلقائياً.", {
+      toast.success("تم إعادة الاتصال بالإنترنت بنجاح. جاري مزامنة البيانات...", {
         description: "أنت متصل بالإنترنت الآن",
-        duration: 5000,
+        duration: 3000,
       });
+
+      try {
+        await syncOfflineAppointments();
+        queryClient.invalidateQueries({ queryKey: ["appointments"] });
+        queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
+        toast.success("تمت مزامنة المواعيد المضافة في وضع أوفلاين بنجاح.");
+      } catch (err) {
+        console.error("Failed to sync offline queue on reconnect:", err);
+        toast.error("فشلت بعض عمليات مزامنة البيانات المحلية. سيتم المحاولة لاحقاً.");
+      }
     };
 
     const handleOffline = () => {
       setIsOnline(false);
       toast.warning("تم قطع الاتصال بالإنترنت. تعمل الآن في وضع عدم الاتصال.", {
-        description: "يمكنك متابعة العمل على البيانات الحالية، ولكن لن تتمكن من رفع صور الروشتات حتى يعود الاتصال.",
+        description: "يمكنك متابعة إضافة المرضى للطابور محلياً، وسيتم حفظهم ومزامنتهم عند عودة الاتصال.",
         duration: 10000,
       });
     };
@@ -48,7 +61,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <>

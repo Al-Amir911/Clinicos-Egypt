@@ -65,13 +65,6 @@ export function AddPatientModal({
   const { mutateAsync: addPatient } = useAddPatient();
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      toast.error("أنت غير متصل بالإنترنت حالياً. لا يمكن إضافة المرضى في وضع عدم الاتصال.", {
-        description: "يرجى الانتظار حتى يتم إعادة الاتصال بالإنترنت.",
-      });
-      return;
-    }
-
     try {
       // Ensure scheduled_time is sent as a proper ISO string with timezone context
       const payload = {
@@ -79,8 +72,17 @@ export function AddPatientModal({
         scheduled_time: data.scheduled_time ? new Date(data.scheduled_time).toISOString() : undefined
       };
       
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
       await addPatient(payload as any);
-      toast.success("تمت إضافة المريض للطابور بنجاح");
+
+      if (isOffline) {
+        toast.info("تم حفظ بيانات المريض محلياً. سيتم مزامنتها تلقائياً عند عودة الاتصال بالإنترنت.", {
+          description: "وضع عدم الاتصال (أوفلاين)",
+          duration: 6000,
+        });
+      } else {
+        toast.success("تمت إضافة المريض للطابور بنجاح");
+      }
       setOpen(false);
       reset();
     } catch (error: any) {
@@ -89,7 +91,7 @@ export function AddPatientModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen} modal={false}>
       {trigger ? (
         <DialogTrigger render={trigger as any} />
       ) : (

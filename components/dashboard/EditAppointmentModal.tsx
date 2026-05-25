@@ -130,7 +130,7 @@ export function EditAppointmentModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-right pr-6">تعديل بيانات الحجز</DialogTitle>

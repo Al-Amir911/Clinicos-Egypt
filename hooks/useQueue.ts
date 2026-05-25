@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
+import { getOfflineAppointments, addOfflineAppointment } from "@/utils/offlineQueue";
 
 export function useQueue() {
    
@@ -37,48 +38,59 @@ export function useQueue() {
   return useQuery({
     queryKey: ["appointments"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { data, error } = await supabase
-        .from("appointments")
-        .select(`
-          id,
-          queue_number,
-          status,
-          visit_type,
-          created_at,
-          notified,
-          prescription_url,
-          scheduled_time,
-          patient_id,
-          patient:patients(name, phone_number)
-        `)
-        .order("scheduled_time", { ascending: true, nullsFirst: false })
-        .order("queue_number", { ascending: true });
-
-      if (error) throw error;
-
-      // Filter to only show today's appointments:
+      // Get today's start/end dates
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
       const todayEnd = todayStart + 24 * 60 * 60 * 1000;
 
-      return (data || [])
-        .filter((apt: any) => {
-          if (apt.scheduled_time) {
-            const st = new Date(apt.scheduled_time).getTime();
-            return st >= todayStart && st < todayEnd;
-          }
-          // Walk-in: show if created today
-          const ct = new Date(apt.created_at).getTime();
-          return ct >= todayStart && ct < todayEnd;
-        })
-        .sort((a: any, b: any) => {
-          const timeA = new Date(a.scheduled_time || a.created_at).getTime();
-          const timeB = new Date(b.scheduled_time || b.created_at).getTime();
-          return timeA - timeB;
-        });
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase
+          .from("appointments")
+          .select(`
+            id,
+            queue_number,
+            status,
+            visit_type,
+            created_at,
+            notified,
+            prescription_url,
+            scheduled_time,
+            patient_id,
+            patient:patients(name, phone_number)
+          `)
+          .order("scheduled_time", { ascending: true, nullsFirst: false })
+          .order("queue_number", { ascending: true });
+
+        if (error) throw error;
+
+        const filtered = (data || [])
+          .filter((apt: any) => {
+            if (apt.scheduled_time) {
+              const st = new Date(apt.scheduled_time).getTime();
+              return st >= todayStart && st < todayEnd;
+            }
+            // Walk-in: show if created today
+            const ct = new Date(apt.created_at).getTime();
+            return ct >= todayStart && ct < todayEnd;
+          })
+          .sort((a: any, b: any) => {
+            const timeA = new Date(a.scheduled_time || a.created_at).getTime();
+            const timeB = new Date(b.scheduled_time || b.created_at).getTime();
+            return timeA - timeB;
+          });
+
+        const offlineAppts = getOfflineAppointments();
+        return [...offlineAppts, ...filtered];
+      } catch (err) {
+        console.warn("useQueue offline fetch fallback triggered:", err);
+        const offlineAppts = getOfflineAppointments();
+        const cachedData: any = queryClient.getQueryData(["appointments"]) || [];
+        const serverAppts = cachedData.filter((appt: any) => !appt.isOfflineTemp);
+        return [...offlineAppts, ...serverAppts];
+      }
     },
   });
 }
@@ -117,6 +129,11 @@ export function useAddPatient() {
 
   return useMutation({
     mutationFn: async ({ phone, name, visitType, scheduled_time }: { phone: string; name: string; visitType: "consultation" | "follow_up", scheduled_time?: string }) => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        const newOfflineAppt = addOfflineAppointment(name, phone, visitType, scheduled_time);
+        return newOfflineAppt;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
