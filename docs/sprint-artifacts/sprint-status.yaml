@@ -1,0 +1,64 @@
+# generated: 2026-05-25T14:59:00Z
+# project: Clinic System
+# project_key: clinic-system
+# tracking_system: file-system
+# story_location: docs/sprint-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done by *retrospective
+
+generated: 2026-05-25T14:59:00Z
+project: Clinic System
+project_key: clinic-system
+tracking_system: file-system
+story_location: docs/sprint-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-rtl-app-shell-and-navigation: done
+  1-2-patient-registration: done
+  1-3-live-queue-dashboard: done
+  1-4-pwa-setup: review
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-whatsapp-location-and-confirmation-trigger: backlog
+  2-2-automated-background-reminders: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-prescription-camera-upload: backlog
+  3-2-payment-logging: backlog
+  3-3-daily-revenue-summary: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-search-as-you-type-and-instant-booking: backlog
+  4-2-calendar-view-and-scheduled-appointments: backlog
+  4-3-clinic-settings-and-location-management: backlog
+  4-4-dynamic-whatsapp-messages: backlog
+  4-5-dedicated-patients-directory-and-financial-ledger: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-eliminate-unbounded-data-fetching-and-implement-server-side-filtering: backlog
+  5-2-patch-reverse-tabnabbing-vulnerability: backlog
+  5-3-enforce-strict-type-safety-and-remove-any-abuse: backlog
+  5-4-resolve-network-request-waterfalls-and-date-math: backlog
+  epic-5-retrospective: optional

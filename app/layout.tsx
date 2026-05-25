@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider";
+import { PwaProvider } from "@/components/providers/PwaProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
@@ -29,7 +30,9 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-slate-50 flex flex-col">
         <ReactQueryProvider>
-          {children}
+          <PwaProvider>
+            {children}
+          </PwaProvider>
         </ReactQueryProvider>
         <Toaster position="top-center" richColors />
       </body>
