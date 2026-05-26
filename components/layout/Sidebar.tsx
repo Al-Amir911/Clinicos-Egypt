@@ -81,6 +81,10 @@ export function Sidebar() {
           <LogOut className="w-5 h-5" />
           تسجيل الخروج
         </button>
+        
+        <div className="text-[10px] text-slate-400/60 text-center pt-4 select-none hover:text-primary transition-colors cursor-default" dir="ltr">
+          Developed by <span className="font-semibold">Orion Systems</span>
+        </div>
       </div>
     </aside>
   );
