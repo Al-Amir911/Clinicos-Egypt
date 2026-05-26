@@ -18,7 +18,16 @@ const formSchema = z.object({
   phone: z.string().min(11, "يجب أن يكون رقم الهاتف 11 رقماً").max(11, "رقم الهاتف غير صحيح"),
   name: z.string().min(2, "الاسم مطلوب"),
   visitType: z.enum(["consultation", "follow_up"]),
-  scheduled_time: z.string().optional(),
+  scheduled_date: z.string().optional(),
+  scheduled_time_only: z.string().optional(),
+}).refine((data) => {
+  if (data.scheduled_time_only && !data.scheduled_date) {
+    return false;
+  }
+  return true;
+}, {
+  message: "يجب تحديد التاريخ إذا قمت بتحديد الوقت",
+  path: ["scheduled_date"],
 });
 
 interface EditAppointmentModalProps {
@@ -42,22 +51,24 @@ export function EditAppointmentModal({
   const { mutateAsync: updateAppointment } = useUpdateAppointmentDetails();
   const { mutateAsync: deleteAppointment } = useDeleteAppointment();
 
-  // Format the date for the datetime-local input (YYYY-MM-DDTHH:mm)
+  // Format the date for the date and time inputs
   const formatForInput = (isoString?: string | null) => {
-    if (!isoString) return "";
+    if (!isoString) return { date: "", time: "" };
     try {
       const date = new Date(isoString);
-      if (isNaN(date.getTime())) return "";
+      if (isNaN(date.getTime())) return { date: "", time: "" };
       
-      // Adjust for timezone offset to get the correct "local" string for the input
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
+      return {
+        date: `${year}-${month}-${day}`,
+        time: `${hours}:${minutes}`,
+      };
     } catch (e) {
-      return "";
+      return { date: "", time: "" };
     }
   };
 
@@ -73,7 +84,8 @@ export function EditAppointmentModal({
       phone: appointment.patientPhone,
       name: appointment.patientName,
       visitType: appointment.visitType,
-      scheduled_time: formatForInput(appointment.scheduledTime),
+      scheduled_date: formatForInput(appointment.scheduledTime).date,
+      scheduled_time_only: formatForInput(appointment.scheduledTime).time,
     },
   });
 
@@ -83,20 +95,27 @@ export function EditAppointmentModal({
         phone: appointment.patientPhone,
         name: appointment.patientName,
         visitType: appointment.visitType,
-        scheduled_time: formatForInput(appointment.scheduledTime),
+        scheduled_date: formatForInput(appointment.scheduledTime).date,
+        scheduled_time_only: formatForInput(appointment.scheduledTime).time,
       });
     }
   }, [open, appointment, reset]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
+      let scheduled_time: string | null = null;
+      if (data.scheduled_date) {
+        const timePart = data.scheduled_time_only || "00:00";
+        scheduled_time = new Date(`${data.scheduled_date}T${timePart}`).toISOString();
+      }
+
       await updateAppointment({
         id: appointment.id,
         patientId: appointment.patientId,
         name: data.name,
         phone: data.phone,
         visitType: data.visitType,
-        scheduled_time: data.scheduled_time ? new Date(data.scheduled_time).toISOString() : null,
+        scheduled_time,
       });
       
       if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -182,14 +201,30 @@ export function EditAppointmentModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-scheduled_time">موعد الحجز</Label>
-            <input
-              id="edit-scheduled_time"
-              type="datetime-local"
-              dir="ltr"
-              className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-left block md:text-sm dark:bg-input/30"
-              {...register("scheduled_time")}
-            />
+            <Label>موعد الحجز</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="edit-scheduled_date" className="text-xs text-slate-400">التاريخ</Label>
+                <input
+                  id="edit-scheduled_date"
+                  type="date"
+                  dir="ltr"
+                  className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-left block md:text-sm dark:bg-input/30"
+                  {...register("scheduled_date")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-scheduled_time_only" className="text-xs text-slate-400">الوقت</Label>
+                <input
+                  id="edit-scheduled_time_only"
+                  type="time"
+                  dir="ltr"
+                  className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-left block md:text-sm dark:bg-input/30"
+                  {...register("scheduled_time_only")}
+                />
+              </div>
+            </div>
+            {errors.scheduled_date && <p className="text-xs text-red-500">{errors.scheduled_date.message}</p>}
             <p className="text-xs text-slate-500">اتركه فارغاً ليصبح مريضاً عادياً في الطابور</p>
           </div>
 

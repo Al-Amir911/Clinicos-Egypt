@@ -13,11 +13,26 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAddPatient } from "@/hooks/useQueue";
 
+const splitDateTime = (dateTimeStr?: string) => {
+  if (!dateTimeStr) return { date: "", time: "" };
+  const [date, time] = dateTimeStr.split("T");
+  return { date: date || "", time: (time ? time.slice(0, 5) : "") };
+};
+
 const formSchema = z.object({
   phone: z.string().min(11, "يجب أن يكون رقم الهاتف 11 رقماً").max(11, "رقم الهاتف غير صحيح"),
   name: z.string().min(2, "الاسم مطلوب"),
   visitType: z.enum(["consultation", "follow_up"]),
-  scheduled_time: z.string().optional(),
+  scheduled_date: z.string().optional(),
+  scheduled_time_only: z.string().optional(),
+}).refine((data) => {
+  if (data.scheduled_time_only && !data.scheduled_date) {
+    return false;
+  }
+  return true;
+}, {
+  message: "يجب تحديد التاريخ إذا قمت بتحديد الوقت",
+  path: ["scheduled_date"],
 });
 
 export function AddPatientModal({
@@ -47,7 +62,8 @@ export function AddPatientModal({
       phone: defaultPhone,
       name: defaultName,
       visitType: "consultation",
-      scheduled_time: defaultScheduledTime,
+      scheduled_date: splitDateTime(defaultScheduledTime).date,
+      scheduled_time_only: splitDateTime(defaultScheduledTime).time,
     },
   });
 
@@ -57,7 +73,8 @@ export function AddPatientModal({
         phone: defaultPhone,
         name: defaultName,
         visitType: "consultation",
-        scheduled_time: defaultScheduledTime,
+        scheduled_date: splitDateTime(defaultScheduledTime).date,
+        scheduled_time_only: splitDateTime(defaultScheduledTime).time,
       });
     }
   }, [open, defaultName, defaultPhone, defaultScheduledTime, reset]);
@@ -66,10 +83,17 @@ export function AddPatientModal({
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      // Ensure scheduled_time is sent as a proper ISO string with timezone context
+      let scheduled_time: string | undefined = undefined;
+      if (data.scheduled_date) {
+        const timePart = data.scheduled_time_only || "00:00";
+        scheduled_time = new Date(`${data.scheduled_date}T${timePart}`).toISOString();
+      }
+
       const payload = {
-        ...data,
-        scheduled_time: data.scheduled_time ? new Date(data.scheduled_time).toISOString() : undefined
+        phone: data.phone,
+        name: data.name,
+        visitType: data.visitType,
+        scheduled_time,
       };
       
       const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
@@ -151,14 +175,30 @@ export function AddPatientModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="scheduled_time">موعد الحجز (اختياري)</Label>
-            <input
-              id="scheduled_time"
-              type="datetime-local"
-              dir="ltr"
-              className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-left block md:text-sm dark:bg-input/30"
-              {...register("scheduled_time")}
-            />
+            <Label>موعد الحجز (اختياري)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="scheduled_date" className="text-xs text-slate-400">التاريخ</Label>
+                <input
+                  id="scheduled_date"
+                  type="date"
+                  dir="ltr"
+                  className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-left block md:text-sm dark:bg-input/30"
+                  {...register("scheduled_date")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="scheduled_time_only" className="text-xs text-slate-400">الوقت</Label>
+                <input
+                  id="scheduled_time_only"
+                  type="time"
+                  dir="ltr"
+                  className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-left block md:text-sm dark:bg-input/30"
+                  {...register("scheduled_time_only")}
+                />
+              </div>
+            </div>
+            {errors.scheduled_date && <p className="text-xs text-red-500">{errors.scheduled_date.message}</p>}
             <p className="text-xs text-slate-500">اتركه فارغاً لإضافته للطابور الحالي مباشرة</p>
           </div>
 
