@@ -33,7 +33,9 @@ export function useQueue() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'appointments' },
         () => {
+          queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
           queryClient.invalidateQueries({ queryKey: ["appointments"] });
+          queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
           queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
         }
       )
@@ -41,6 +43,7 @@ export function useQueue() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'payments' },
         () => {
+          queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
           queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
         }
       )
@@ -51,55 +54,68 @@ export function useQueue() {
     };
   }, [queryClient, supabase]);
 
-  return useQuery({
-    queryKey: ["appointments"],
+  // 1. Base server-only query
+  const serverQuery = useQuery({
+    queryKey: ["appointmentsServer"],
     networkMode: "always",
     queryFn: async () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        return queryClient.getQueryData(["appointmentsServer"]) || [];
+      }
+
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
       const todayEnd = todayStart + 24 * 60 * 60 * 1000;
 
-      let serverAppts: any[] = [];
-      try {
-        if (typeof navigator !== "undefined" && !navigator.onLine) {
-          throw new Error("Offline status detected");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          id,
+          queue_number,
+          status,
+          visit_type,
+          created_at,
+          notified,
+          prescription_url,
+          scheduled_time,
+          patient_id,
+          price,
+          is_paid,
+          payment_method,
+          patient:patients(name, phone_number)
+        `)
+        .order("scheduled_time", { ascending: true, nullsFirst: false })
+        .order("queue_number", { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).filter((apt: any) => {
+        if (apt.scheduled_time) {
+          const st = new Date(apt.scheduled_time).getTime();
+          return st >= todayStart && st < todayEnd;
         }
+        const ct = new Date(apt.created_at).getTime();
+        return ct >= todayStart && ct < todayEnd;
+      });
+    }
+  });
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-
-        const { data, error } = await supabase
-          .from("appointments")
-          .select(`
-            id,
-            queue_number,
-            status,
-            visit_type,
-            created_at,
-            notified,
-            prescription_url,
-            scheduled_time,
-            patient_id,
-            patient:patients(name, phone_number)
-          `)
-          .order("scheduled_time", { ascending: true, nullsFirst: false })
-          .order("queue_number", { ascending: true });
-
-        if (error) throw error;
-
-        serverAppts = (data || []).filter((apt: any) => {
-          if (apt.scheduled_time) {
-            const st = new Date(apt.scheduled_time).getTime();
-            return st >= todayStart && st < todayEnd;
-          }
-          const ct = new Date(apt.created_at).getTime();
-          return ct >= todayStart && ct < todayEnd;
+  // 2. Merged UI query
+  return useQuery({
+    queryKey: ["appointments"],
+    networkMode: "always",
+    queryFn: async () => {
+      if (typeof navigator !== "undefined" && navigator.onLine) {
+        await queryClient.ensureQueryData({
+          queryKey: ["appointmentsServer"],
+          queryFn: serverQuery.refetch as any
         });
-      } catch (err) {
-        console.warn("useQueue offline fetch fallback triggered:", err);
-        const cachedData: any = queryClient.getQueryData(["appointments"]) || [];
-        serverAppts = cachedData.filter((appt: any) => !appt.isOfflineTemp);
       }
+
+      const serverAppts = queryClient.getQueryData<any[]>(["appointmentsServer"]) || [];
 
       // --- MERGE OFFLINE CHANGES ---
       const offlineAdditions = getOfflineAppointments();
@@ -249,7 +265,9 @@ export function useAddPatient() {
       return appointment;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
     },
   });
@@ -288,7 +306,9 @@ export function useUpdateAppointmentStatus() {
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
     },
   });
@@ -360,7 +380,9 @@ export function useLogPayment() {
       return appointment;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
     },
   });
@@ -419,6 +441,7 @@ export function useUploadPrescription() {
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
   });
@@ -428,78 +451,93 @@ export function useDailyStats() {
   const supabase: any = createClient();
   const queryClient = useQueryClient();
 
+  // 1. Base server stats query
+  const serverStatsQuery = useQuery({
+    queryKey: ["dailyStatsServer"],
+    networkMode: "always",
+    queryFn: async () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        return queryClient.getQueryData(["dailyStatsServer"]) || {
+          totalPatients: 0,
+          waitingPatients: 0,
+          totalRevenue: 0,
+          cashRevenue: 0,
+          instapayRevenue: 0,
+        };
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+      
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startOfDay = today.toISOString();
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      const endOfDayISO = endOfDay.toISOString();
+
+      const { data: todayAppointments, error: apptError } = await supabase
+        .from("appointments")
+        .select("id, status")
+        .eq("clinic_id", clinic_id)
+        .or(`and(scheduled_time.is.null,created_at.gte.${startOfDay},created_at.lte.${endOfDayISO}),and(scheduled_time.gte.${startOfDay},scheduled_time.lte.${endOfDayISO})`);
+
+      if (apptError) throw apptError;
+
+      const { data: payments, error: paymentError } = await supabase
+        .from("payments")
+        .select("amount, method")
+        .eq("clinic_id", clinic_id)
+        .gte("created_at", startOfDay)
+        .lte("created_at", endOfDayISO);
+
+      if (paymentError) throw paymentError;
+
+      const totalPatients = todayAppointments.length;
+      const waitingPatients = todayAppointments.filter((a: any) => a.status === "waiting" || a.status === "in_clinic").length;
+      
+      const totalRevenue = payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+      const cashRevenue = payments?.filter((p: any) => p.method === "cash").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+      const instapayRevenue = payments?.filter((p: any) => p.method === "instapay").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+
+      return {
+        totalPatients,
+        waitingPatients,
+        totalRevenue,
+        cashRevenue,
+        instapayRevenue
+      };
+    }
+  });
+
+  // 2. Merged UI stats query
   return useQuery({
     queryKey: ["dailyStats"],
     networkMode: "always",
     queryFn: async () => {
-      let stats = {
+      if (typeof navigator !== "undefined" && navigator.onLine) {
+        await queryClient.ensureQueryData({
+          queryKey: ["dailyStatsServer"],
+          queryFn: serverStatsQuery.refetch as any
+        });
+      }
+
+      const stats = queryClient.getQueryData<any>(["dailyStatsServer"]) || {
         totalPatients: 0,
         waitingPatients: 0,
         totalRevenue: 0,
         cashRevenue: 0,
         instapayRevenue: 0,
       };
-
-      try {
-        if (typeof navigator !== "undefined" && !navigator.onLine) {
-          throw new Error("Offline status detected");
-        }
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("clinic_id")
-          .eq("id", user.id)
-          .single();
-        
-        const clinic_id = profile?.clinic_id;
-        if (!clinic_id) throw new Error("No clinic associated with user");
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const startOfDay = today.toISOString();
-        const endOfDay = new Date(today);
-        endOfDay.setHours(23, 59, 59, 999);
-        const endOfDayISO = endOfDay.toISOString();
-
-        const { data: todayAppointments, error: apptError } = await supabase
-          .from("appointments")
-          .select("id, status")
-          .eq("clinic_id", clinic_id)
-          .or(`and(scheduled_time.is.null,created_at.gte.${startOfDay},created_at.lte.${endOfDayISO}),and(scheduled_time.gte.${startOfDay},scheduled_time.lte.${endOfDayISO})`);
-
-        if (apptError) throw apptError;
-
-        const { data: payments, error: paymentError } = await supabase
-          .from("payments")
-          .select("amount, method")
-          .eq("clinic_id", clinic_id)
-          .gte("created_at", startOfDay)
-          .lte("created_at", endOfDayISO);
-
-        if (paymentError) throw paymentError;
-
-        const totalPatients = todayAppointments.length;
-        const waitingPatients = todayAppointments.filter((a: any) => a.status === "waiting" || a.status === "in_clinic").length;
-        
-        const totalRevenue = payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
-        const cashRevenue = payments?.filter((p: any) => p.method === "cash").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
-        const instapayRevenue = payments?.filter((p: any) => p.method === "instapay").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
-
-        stats = {
-          totalPatients,
-          waitingPatients,
-          totalRevenue,
-          cashRevenue,
-          instapayRevenue
-        };
-      } catch (err) {
-        console.warn("useDailyStats offline fallback triggered:", err);
-        const cached: any = queryClient.getQueryData(["dailyStats"]);
-        if (cached) stats = { ...cached };
-      }
 
       // --- MERGE OFFLINE ADDITIONS AND PAYMENTS INTO STATS ---
       const additions = getOfflineAppointments();
@@ -527,11 +565,14 @@ export function useDailyStats() {
         }
       });
 
-      const cachedAppts: any[] = queryClient.getQueryData(["appointments"]) || [];
-      const serverAppts = cachedAppts.filter(a => !a.isOfflineTemp);
+      // Get server appointments to compute adjustments accurately
+      const serverAppts = queryClient.getQueryData<any[]>(["appointmentsServer"]) || [];
 
       let serverWaitingCountAdjustment = 0;
       let serverTotalCountAdjustment = 0;
+      let serverRevenueAdjustment = 0;
+      let serverCashAdjustment = 0;
+      let serverInstapayAdjustment = 0;
 
       serverAppts.forEach((appt) => {
         const isDeletedOffline = deletions.includes(appt.id);
@@ -541,6 +582,14 @@ export function useDailyStats() {
           serverTotalCountAdjustment -= 1;
           if (originalIsWaiting) {
             serverWaitingCountAdjustment -= 1;
+          } else if (appt.status === "completed" && appt.price) {
+            // Subtract price from revenue adjustments if the deleted server appointment was completed
+            serverRevenueAdjustment -= Number(appt.price);
+            if (appt.payment_method === "cash") {
+              serverCashAdjustment -= Number(appt.price);
+            } else if (appt.payment_method === "instapay") {
+              serverInstapayAdjustment -= Number(appt.price);
+            }
           }
         } else {
           const statusUpdate = statusUpdates.find(u => u.id === appt.id);
@@ -571,9 +620,9 @@ export function useDailyStats() {
       return {
         totalPatients: Math.max(0, stats.totalPatients + offlineTotalAdditions + serverTotalCountAdjustment),
         waitingPatients: Math.max(0, stats.waitingPatients + offlineWaitingAdditions + serverWaitingCountAdjustment),
-        totalRevenue: stats.totalRevenue + offlineAddedRevenue + offlineServerPaymentRevenue,
-        cashRevenue: stats.cashRevenue + offlineAddedCash + offlineServerPaymentCash,
-        instapayRevenue: stats.instapayRevenue + offlineAddedInstapay + offlineServerPaymentInstapay,
+        totalRevenue: Math.max(0, stats.totalRevenue + offlineAddedRevenue + offlineServerPaymentRevenue + serverRevenueAdjustment),
+        cashRevenue: Math.max(0, stats.cashRevenue + offlineAddedCash + offlineServerPaymentCash + serverCashAdjustment),
+        instapayRevenue: Math.max(0, stats.instapayRevenue + offlineAddedInstapay + offlineServerPaymentInstapay + serverInstapayAdjustment),
       };
     },
   });
@@ -737,7 +786,9 @@ export function useUpdateAppointmentDetails() {
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
     },
   });
@@ -766,7 +817,9 @@ export function useDeleteAppointment() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
     },
   });
@@ -795,7 +848,9 @@ export function useUpdatePatient() {
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allPatientsServer"] });
       queryClient.invalidateQueries({ queryKey: ["allPatients"] });
+      queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
   });

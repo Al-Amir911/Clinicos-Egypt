@@ -32,8 +32,11 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
       try {
         await syncOfflineAppointments();
+        queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
         queryClient.invalidateQueries({ queryKey: ["appointments"] });
+        queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
         queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
+        queryClient.invalidateQueries({ queryKey: ["allPatientsServer"] });
         queryClient.invalidateQueries({ queryKey: ["allPatients"] });
         toast.success("تمت مزامنة جميع التعديلات والمواعيد المحلية بنجاح.");
       } catch (err) {

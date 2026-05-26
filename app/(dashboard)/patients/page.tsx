@@ -23,48 +23,56 @@ function useAllPatients(searchTerm: string) {
   const supabase = createClient();
   const queryClient = useQueryClient();
 
+  const serverPatientsQuery = useQuery({
+    queryKey: ["allPatientsServer", searchTerm],
+    networkMode: "always",
+    queryFn: async (): Promise<PatientRow[]> => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        return queryClient.getQueryData(["allPatientsServer", searchTerm]) || [];
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single() as { data: { clinic_id: string | null } | null };
+
+      const clinic_id = profile?.clinic_id;
+      if (!clinic_id) throw new Error("No clinic associated with user");
+
+      let query = supabase
+        .from("patients")
+        .select("id, name, phone_number, national_id, created_at")
+        .eq("clinic_id", clinic_id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,phone_number.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return (data as PatientRow[]) || [];
+    }
+  });
+
   return useQuery({
     queryKey: ["allPatients", searchTerm],
     networkMode: "always",
     queryFn: async (): Promise<PatientRow[]> => {
-      let serverPatients: PatientRow[] = [];
-      try {
-        if (typeof navigator !== "undefined" && !navigator.onLine) {
-          throw new Error("Offline status detected");
-        }
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("clinic_id")
-          .eq("id", user.id)
-          .single() as { data: { clinic_id: string | null } | null };
-
-        const clinic_id = profile?.clinic_id;
-        if (!clinic_id) throw new Error("No clinic associated with user");
-
-        let query = supabase
-          .from("patients")
-          .select("id, name, phone_number, national_id, created_at")
-          .eq("clinic_id", clinic_id)
-          .order("created_at", { ascending: false })
-          .limit(100);
-
-        if (searchTerm) {
-          query = query.or(`name.ilike.%${searchTerm}%,phone_number.ilike.%${searchTerm}%`);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        serverPatients = (data as PatientRow[]) || [];
-      } catch (err) {
-        console.warn("useAllPatients offline fallback triggered:", err);
-        const cachedData: any = queryClient.getQueryData(["allPatients", searchTerm]) || [];
-        serverPatients = cachedData;
+      if (typeof navigator !== "undefined" && navigator.onLine) {
+        await queryClient.ensureQueryData({
+          queryKey: ["allPatientsServer", searchTerm],
+          queryFn: serverPatientsQuery.refetch as any
+        });
       }
+
+      const serverPatients = queryClient.getQueryData<PatientRow[]>(["allPatientsServer", searchTerm]) || [];
 
       // Merge offline patient edits
       const offlinePatientEdits = getOfflinePatientEdits();
@@ -82,7 +90,7 @@ function useAllPatients(searchTerm: string) {
       });
 
       return merged;
-    },
+    }
   });
 }
 
