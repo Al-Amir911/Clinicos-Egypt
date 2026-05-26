@@ -82,7 +82,7 @@ export function Sidebar() {
           تسجيل الخروج
         </button>
         
-        <div className="text-[10px] text-slate-400/60 text-center pt-4 select-none hover:text-primary transition-colors cursor-default" dir="ltr">
+        <div className="text-xs text-slate-400/80 text-center pt-2 select-none hover:text-primary transition-colors cursor-default" dir="ltr">
           Developed by <span className="font-semibold">Orion Systems</span>
         </div>
       </div>
