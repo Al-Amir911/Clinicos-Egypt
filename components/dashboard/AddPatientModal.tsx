@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useAddPatient } from "@/hooks/useQueue";
+import { useAddPatient, useSettings } from "@/hooks/useQueue";
+import { createClient } from "@/utils/supabase/client";
 
 const splitDateTime = (dateTimeStr?: string) => {
   if (!dateTimeStr) return { date: "", time: "" };
@@ -80,6 +81,35 @@ export function AddPatientModal({
   }, [open, defaultName, defaultPhone, defaultScheduledTime, reset]);
 
   const { mutateAsync: addPatient } = useAddPatient();
+  const { data: settings } = useSettings();
+  const clinicId = settings?.id;
+  const supabase: any = createClient();
+  const phoneVal = watch("phone");
+
+  useEffect(() => {
+    const checkExistingPatient = async () => {
+      if (phoneVal && phoneVal.length === 11 && clinicId) {
+        try {
+          const { data: patient } = await supabase
+            .from("patients")
+            .select("name")
+            .eq("phone_number", phoneVal)
+            .eq("clinic_id", clinicId)
+            .limit(1)
+            .maybeSingle();
+
+          if (patient && patient.name) {
+            setValue("name", patient.name, { shouldValidate: true });
+            toast.success(`تم العثور على اسم المريض مسجلاً مسبقاً: ${patient.name}`);
+          }
+        } catch (e) {
+          console.error("Error looking up existing patient:", e);
+        }
+      }
+    };
+
+    checkExistingPatient();
+  }, [phoneVal, clinicId, supabase, setValue]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
@@ -137,7 +167,14 @@ export function AddPatientModal({
               placeholder="01xxxxxxxxx"
               dir="ltr"
               className="text-left"
-              {...register("phone")}
+              maxLength={11}
+              autoFocus
+              {...register("phone", {
+                onChange: (e) => {
+                  const clean = e.target.value.replace(/\D/g, "");
+                  setValue("phone", clean, { shouldValidate: true });
+                }
+              })}
             />
             {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
           </div>
