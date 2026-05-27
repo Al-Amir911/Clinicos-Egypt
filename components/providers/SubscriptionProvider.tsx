@@ -10,8 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 // 1. Define custom settings for the subscriber payment collection
-const ADMIN_INSTAPAY_ID = "clinic-os@instapay"; // Change to your InstaPay handle
-const ADMIN_WHATSAPP_NUMBER = "201000000000"; // Change to your WhatsApp phone number (with country code, e.g. 201001234567)
+const ADMIN_INSTAPAY_ID = "01110203939"; // Change to your InstaPay handle
+const ADMIN_WHATSAPP_NUMBER = "201025110560"; // Change to your WhatsApp phone number (with country code, e.g. 201001234567)
 
 interface SubscriptionContextType {
   subscriptionStatus: "active" | "suspended" | "grace_period" | null;

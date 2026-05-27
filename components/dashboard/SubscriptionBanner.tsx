@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 // 1. Define custom settings (must match provider details)
-const ADMIN_INSTAPAY_ID = "clinic-os@instapay"; 
-const ADMIN_WHATSAPP_NUMBER = "201000000000";
+const ADMIN_INSTAPAY_ID = "01110203939"; 
+const ADMIN_WHATSAPP_NUMBER = "201025110560";
 
 export function SubscriptionBanner() {
   const { isWarning, daysRemaining, subscriptionExpiresAt } = useSubscription();
@@ -102,14 +102,14 @@ export function SubscriptionBanner() {
             </p>
           </div>
 
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row-reverse">
+          <div className="pt-4 flex flex-col gap-2 w-full">
             <a 
               href={waLink} 
               target="_blank" 
               rel="noopener noreferrer"
               className={cn(
                 buttonVariants({ variant: "default" }),
-                "w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2 rounded-xl py-4 flex items-center justify-center h-auto font-medium"
+                "w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2 rounded-xl py-3 flex items-center justify-center font-medium"
               )}
             >
               <MessageSquare className="w-4 h-4" />
@@ -118,11 +118,11 @@ export function SubscriptionBanner() {
             <Button 
               variant="outline" 
               onClick={() => setIsOpen(false)}
-              className="w-full rounded-xl py-5"
+              className="w-full rounded-xl py-3"
             >
               إغلاق
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </>
