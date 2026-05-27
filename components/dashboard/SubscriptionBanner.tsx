@@ -6,6 +6,7 @@ import { AlertTriangle, X, CreditCard, MessageSquare, ExternalLink } from "lucid
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useSettings } from "@/hooks/useQueue";
 
 // 1. Define custom settings (must match provider details)
 const ADMIN_INSTAPAY_ID = "01110203939"; 
@@ -13,6 +14,7 @@ const ADMIN_WHATSAPP_NUMBER = "201025110560";
 
 export function SubscriptionBanner() {
   const { isWarning, daysRemaining, subscriptionExpiresAt } = useSubscription();
+  const { data: settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -22,7 +24,7 @@ export function SubscriptionBanner() {
   }
 
   // Pre-fill message for WhatsApp receipt confirmation
-  const clinicName = "العيادة"; // Default fallback
+  const clinicName = settings?.name || "العيادة"; 
   const waText = encodeURIComponent(
     `السلام عليكم، لقد قمت بتحويل الاشتراك الشهري لعيادة: ${clinicName}. يرجى تأكيد استلام الدفعة.`
   );
