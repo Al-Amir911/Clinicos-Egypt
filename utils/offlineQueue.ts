@@ -358,6 +358,7 @@ export async function syncOfflineAppointments() {
 
   // 1. Sync additions (clinicos_offline_appointments)
   const additions = getOfflineAppointments();
+  const failedAdditions: OfflineAppointment[] = [];
   for (const appt of additions) {
     try {
       let patientId;
@@ -418,13 +419,14 @@ export async function syncOfflineAppointments() {
       }
     } catch (err) {
       console.error("Failed to sync additions:", appt, err);
-      throw err;
+      failedAdditions.push(appt);
     }
   }
-  saveOfflineAppointments([]);
+  saveOfflineAppointments(failedAdditions);
 
   // 2. Sync patient edits (clinicos_offline_patient_edits)
   const patientEdits = getOfflinePatientEdits();
+  const failedPatientEdits: OfflinePatientEdit[] = [];
   for (const edit of patientEdits) {
     try {
       const { error } = await supabase
@@ -438,12 +440,14 @@ export async function syncOfflineAppointments() {
       if (error) throw error;
     } catch (err) {
       console.error("Failed to sync patient edit:", edit, err);
+      failedPatientEdits.push(edit);
     }
   }
-  saveOfflinePatientEdits([]);
+  saveOfflinePatientEdits(failedPatientEdits);
 
   // 3. Sync appointment edits (clinicos_offline_edits)
   const edits = getOfflineEdits();
+  const failedEdits: OfflineEdit[] = [];
   for (const edit of edits) {
     try {
       if (edit.name || edit.phone) {
@@ -467,12 +471,14 @@ export async function syncOfflineAppointments() {
       if (apptError) throw apptError;
     } catch (err) {
       console.error("Failed to sync appointment edit:", edit, err);
+      failedEdits.push(edit);
     }
   }
-  saveOfflineEdits([]);
+  saveOfflineEdits(failedEdits);
 
   // 4. Sync status updates (clinicos_offline_status_updates)
   const statusUpdates = getOfflineStatusUpdates();
+  const failedStatusUpdates: OfflineStatusUpdate[] = [];
   for (const update of statusUpdates) {
     try {
       const { error } = await supabase
@@ -485,12 +491,14 @@ export async function syncOfflineAppointments() {
       if (error) throw error;
     } catch (err) {
       console.error("Failed to sync status update:", update, err);
+      failedStatusUpdates.push(update);
     }
   }
-  saveOfflineStatusUpdates([]);
+  saveOfflineStatusUpdates(failedStatusUpdates);
 
   // 5. Sync payments (clinicos_offline_payments)
   const payments = getOfflinePayments();
+  const failedPayments: OfflinePayment[] = [];
   for (const pay of payments) {
     try {
       const { error: apptError } = await supabase
@@ -517,12 +525,14 @@ export async function syncOfflineAppointments() {
       if (paymentError) throw paymentError;
     } catch (err) {
       console.error("Failed to sync payment:", pay, err);
+      failedPayments.push(pay);
     }
   }
-  saveOfflinePayments([]);
+  saveOfflinePayments(failedPayments);
 
   // 6. Sync deletions (clinicos_offline_deletions)
   const deletions = getOfflineDeletions();
+  const failedDeletions: string[] = [];
   for (const id of deletions) {
     try {
       const { error } = await supabase
@@ -532,9 +542,10 @@ export async function syncOfflineAppointments() {
       if (error) throw error;
     } catch (err) {
       console.error("Failed to sync deletion:", id, err);
+      failedDeletions.push(id);
     }
   }
-  saveOfflineDeletions([]);
+  saveOfflineDeletions(failedDeletions);
 
   console.log("Background sync finished successfully!");
 }

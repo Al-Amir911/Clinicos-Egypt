@@ -34,7 +34,7 @@ development_status:
   1-1-rtl-app-shell-and-navigation: done
   1-2-patient-registration: done
   1-3-live-queue-dashboard: done
-  1-4-pwa-setup: review
+  1-4-pwa-setup: done
   epic-1-retrospective: optional
 
   epic-2: backlog
