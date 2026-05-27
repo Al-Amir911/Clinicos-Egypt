@@ -88,11 +88,11 @@ export function SubscriptionBanner() {
                 <span className="text-slate-500">قيمة الاشتراك:</span>
                 <span className="font-bold text-slate-800">500 جنيه مصري / شهرياً</span>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <span className="text-xs text-slate-400">طريقة التحويل المفضلة:</span>
-                <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
-                  <span className="font-semibold text-slate-700">إنستاباي (InstaPay)</span>
-                  <span className="font-mono font-bold text-primary select-all">{ADMIN_INSTAPAY_ID}</span>
+                <div className="flex flex-col bg-white p-3 rounded-lg border border-slate-200 text-center gap-1">
+                  <span className="text-xs font-semibold text-slate-500">رقم الحساب / إنستاباي (InstaPay)</span>
+                  <span className="font-mono font-bold text-primary text-xl select-all tracking-wider">{ADMIN_INSTAPAY_ID}</span>
                 </div>
               </div>
             </div>

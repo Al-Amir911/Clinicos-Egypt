@@ -156,8 +156,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
                   <span className="font-semibold text-emerald-400">إنستاباي (InstaPay)</span>
                 </div>
                 <div className="flex flex-col bg-slate-950/60 p-3 rounded-lg border border-slate-800 text-center space-y-1">
-                  <span className="text-xs text-slate-500">عنوان الدفع (InstaPay ID)</span>
-                  <span className="font-mono text-base font-bold text-white select-all">{ADMIN_INSTAPAY_ID}</span>
+                  <span className="text-xs text-slate-500">رقم الهاتف / عنوان إنستاباي (InstaPay ID)</span>
+                  <span className="font-mono text-xl md:text-2xl font-bold text-white select-all tracking-wider">{ADMIN_INSTAPAY_ID}</span>
                 </div>
               </div>
             </div>
