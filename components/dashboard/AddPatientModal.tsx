@@ -88,7 +88,8 @@ export function AddPatientModal({
 
   useEffect(() => {
     const checkExistingPatient = async () => {
-      if (phoneVal && phoneVal.length === 11 && clinicId) {
+      // Only check if modal is open, we aren't using a pre-populated defaultName, and phone is 11 digits
+      if (open && !defaultName && phoneVal && phoneVal.length === 11 && clinicId) {
         try {
           const { data: patient } = await supabase
             .from("patients")
@@ -109,7 +110,7 @@ export function AddPatientModal({
     };
 
     checkExistingPatient();
-  }, [phoneVal, clinicId, supabase, setValue]);
+  }, [open, defaultName, phoneVal, clinicId, supabase, setValue]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {

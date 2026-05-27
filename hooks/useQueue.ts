@@ -105,17 +105,10 @@ export function useQueue() {
 
   // 2. Merged UI query
   return useQuery({
-    queryKey: ["appointments"],
+    queryKey: ["appointments", serverQuery.data],
     networkMode: "always",
     queryFn: async () => {
-      if (typeof navigator !== "undefined" && navigator.onLine) {
-        await queryClient.ensureQueryData({
-          queryKey: ["appointmentsServer"],
-          queryFn: serverQuery.refetch as any
-        });
-      }
-
-      const serverAppts = queryClient.getQueryData<any[]>(["appointmentsServer"]) || [];
+      const serverAppts = serverQuery.data || [];
 
       // --- MERGE OFFLINE CHANGES ---
       const offlineAdditions = getOfflineAppointments();
@@ -124,10 +117,10 @@ export function useQueue() {
       const offlineStatusUpdates = getOfflineStatusUpdates();
 
       // 1. Filter out deleted server appointments
-      let merged = serverAppts.filter((apt) => !offlineDeletions.includes(apt.id));
+      let merged = serverAppts.filter((apt: any) => !offlineDeletions.includes(apt.id));
 
       // 2. Apply status updates to server appointments
-      merged = merged.map((apt) => {
+      merged = merged.map((apt: any) => {
         const update = offlineStatusUpdates.find((u) => u.id === apt.id);
         if (update) {
           return { ...apt, status: update.status };
@@ -136,7 +129,7 @@ export function useQueue() {
       });
 
       // 3. Apply edits to server appointments
-      merged = merged.map((apt) => {
+      merged = merged.map((apt: any) => {
         const edit = offlineEdits.find((e) => e.id === apt.id);
         if (edit) {
           return {
@@ -224,7 +217,7 @@ export function useAddPatient() {
         .select("clinic_id")
         .eq("id", user.id)
         .single();
-      
+
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
@@ -244,7 +237,7 @@ export function useAddPatient() {
           .insert({ name, phone_number: phone, clinic_id })
           .select()
           .single();
-        
+
         if (patientError) throw patientError;
         patientId = newPatient.id;
       }
@@ -265,6 +258,17 @@ export function useAddPatient() {
       return appointment;
     },
     onSuccess: () => {
+      // Optimistic update: immediately patch the cached stats for instant UI feedback
+      const currentStats = queryClient.getQueryData<any>(["dailyStatsServer"]);
+      if (currentStats) {
+        queryClient.setQueryData(["dailyStatsServer"], {
+          ...currentStats,
+          totalPatients: currentStats.totalPatients + 1,
+          waitingPatients: currentStats.waitingPatients + 1,
+        });
+      }
+
+      // Background refetch for authoritative server data
       queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
@@ -294,7 +298,7 @@ export function useUpdateAppointmentStatus() {
 
       const { data, error } = await supabase
         .from("appointments")
-        .update({ 
+        .update({
           status,
           completed_at: status === "completed" ? new Date().toISOString() : null
         })
@@ -305,7 +309,31 @@ export function useUpdateAppointmentStatus() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      // Optimistic update: immediately patch the cached stats for instant UI feedback
+      const currentStats = queryClient.getQueryData<any>(["dailyStatsServer"]);
+      if (currentStats) {
+        const wasWaitingOrInClinic = variables.status === "completed";
+        queryClient.setQueryData(["dailyStatsServer"], {
+          ...currentStats,
+          waitingPatients: wasWaitingOrInClinic
+            ? Math.max(0, currentStats.waitingPatients - 1)
+            : currentStats.waitingPatients,
+        });
+      }
+
+      // Optimistic update: patch the appointment in the cached server appointments list
+      const cachedAppts = queryClient.getQueryData<any[]>(["appointmentsServer"]);
+      if (cachedAppts) {
+        queryClient.setQueryData(
+          ["appointmentsServer"],
+          cachedAppts.map((apt: any) =>
+            apt.id === variables.id ? { ...apt, status: variables.status } : apt
+          )
+        );
+      }
+
+      // Background refetch for authoritative server data
       queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
@@ -347,13 +375,13 @@ export function useLogPayment() {
         .select("clinic_id")
         .eq("id", user.id)
         .single();
-      
+
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
       const { data: appointment, error: updateError } = await supabase
         .from("appointments")
-        .update({ 
+        .update({
           status: "completed",
           completed_at: new Date().toISOString(),
           price: amount,
@@ -379,7 +407,33 @@ export function useLogPayment() {
 
       return appointment;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      // Optimistic update: immediately patch the revenue stats for instant UI feedback
+      const currentStats = queryClient.getQueryData<any>(["dailyStatsServer"]);
+      if (currentStats) {
+        queryClient.setQueryData(["dailyStatsServer"], {
+          ...currentStats,
+          waitingPatients: Math.max(0, currentStats.waitingPatients - 1),
+          totalRevenue: currentStats.totalRevenue + variables.amount,
+          cashRevenue: currentStats.cashRevenue + (variables.method === "cash" ? variables.amount : 0),
+          instapayRevenue: currentStats.instapayRevenue + (variables.method === "instapay" ? variables.amount : 0),
+        });
+      }
+
+      // Optimistic update: patch the appointment in the cached server appointments list
+      const cachedAppts = queryClient.getQueryData<any[]>(["appointmentsServer"]);
+      if (cachedAppts) {
+        queryClient.setQueryData(
+          ["appointmentsServer"],
+          cachedAppts.map((apt: any) =>
+            apt.id === variables.id
+              ? { ...apt, status: "completed", price: variables.amount, is_paid: true, payment_method: variables.method }
+              : apt
+          )
+        );
+      }
+
+      // Background refetch for authoritative server data
       queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
@@ -394,13 +448,13 @@ export function useUploadPrescription() {
 
   return useMutation({
     networkMode: "always",
-    mutationFn: async ({ 
-      file, 
-      appointmentId, 
-      patientId 
-    }: { 
-      file: File; 
-      appointmentId: string; 
+    mutationFn: async ({
+      file,
+      appointmentId,
+      patientId
+    }: {
+      file: File;
+      appointmentId: string;
       patientId: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -411,12 +465,12 @@ export function useUploadPrescription() {
         .select("clinic_id")
         .eq("id", user.id)
         .single();
-      
+
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
       const filePath = `${clinic_id}/${patientId}/${appointmentId}.jpg`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from("clinic-records")
         .upload(filePath, file, {
@@ -474,7 +528,7 @@ export function useDailyStats() {
         .select("clinic_id")
         .eq("id", user.id)
         .single();
-      
+
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
@@ -504,7 +558,7 @@ export function useDailyStats() {
 
       const totalPatients = todayAppointments.length;
       const waitingPatients = todayAppointments.filter((a: any) => a.status === "waiting" || a.status === "in_clinic").length;
-      
+
       const totalRevenue = payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
       const cashRevenue = payments?.filter((p: any) => p.method === "cash").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
       const instapayRevenue = payments?.filter((p: any) => p.method === "instapay").reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
@@ -521,17 +575,10 @@ export function useDailyStats() {
 
   // 2. Merged UI stats query
   return useQuery({
-    queryKey: ["dailyStats"],
+    queryKey: ["dailyStats", serverStatsQuery.data],
     networkMode: "always",
     queryFn: async () => {
-      if (typeof navigator !== "undefined" && navigator.onLine) {
-        await queryClient.ensureQueryData({
-          queryKey: ["dailyStatsServer"],
-          queryFn: serverStatsQuery.refetch as any
-        });
-      }
-
-      const stats = queryClient.getQueryData<any>(["dailyStatsServer"]) || {
+      const stats: any = serverStatsQuery.data || {
         totalPatients: 0,
         waitingPatients: 0,
         totalRevenue: 0,
@@ -577,7 +624,7 @@ export function useDailyStats() {
       serverAppts.forEach((appt) => {
         const isDeletedOffline = deletions.includes(appt.id);
         const originalIsWaiting = appt.status === "waiting" || appt.status === "in_clinic";
-        
+
         if (isDeletedOffline) {
           serverTotalCountAdjustment -= 1;
           if (originalIsWaiting) {
@@ -649,7 +696,7 @@ export function useSettings() {
           .select("clinic_id")
           .eq("id", user.id)
           .single();
-        
+
         const clinic_id = profile?.clinic_id;
         if (!clinic_id) throw new Error("No clinic associated with user");
 
@@ -689,7 +736,7 @@ export function useUpdateSettings() {
         .select("clinic_id")
         .eq("id", user.id)
         .single();
-      
+
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
@@ -700,11 +747,11 @@ export function useUpdateSettings() {
         .select();
 
       if (error) throw error;
-      
+
       if (!data || data.length === 0) {
         throw new Error("لم يتم العثور على العيادة أو لا تملك صلاحية التعديل. تأكد من إعدادات الـ RLS في Supabase.");
       }
-      
+
       return data[0];
     },
     onSuccess: () => {
@@ -719,20 +766,20 @@ export function useUpdateAppointmentDetails() {
 
   return useMutation({
     networkMode: "always",
-    mutationFn: async ({ 
-      id, 
+    mutationFn: async ({
+      id,
       patientId,
-      name, 
-      phone, 
-      visitType, 
-      scheduled_time 
-    }: { 
-      id: string; 
+      name,
+      phone,
+      visitType,
+      scheduled_time
+    }: {
+      id: string;
       patientId: string;
-      name?: string; 
-      phone?: string; 
-      visitType?: any; 
-      scheduled_time?: string | null 
+      name?: string;
+      phone?: string;
+      visitType?: any;
+      scheduled_time?: string | null
     }) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         const wasTemp = updateOfflineAppointmentDetails(id, name, phone, visitType, scheduled_time);
@@ -760,13 +807,13 @@ export function useUpdateAppointmentDetails() {
           .from("patients")
           .update({ name, phone_number: phone })
           .eq("id", patientId);
-        
+
         if (patientError) throw patientError;
       }
 
       const { data, error } = await supabase
         .from("appointments")
-        .update({ 
+        .update({
           visit_type: visitType,
           scheduled_time: scheduled_time
         })
