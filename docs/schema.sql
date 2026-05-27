@@ -16,6 +16,8 @@ CREATE TABLE clinics (
   working_hours_start TEXT DEFAULT '09:00',
   working_hours_end TEXT DEFAULT '18:00',
   slot_duration INTEGER DEFAULT 30,
+  subscription_status TEXT CHECK (subscription_status IN ('active', 'suspended', 'grace_period')) DEFAULT 'active',
+  subscription_expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '30 days'),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -155,3 +157,11 @@ CREATE POLICY "Users can read from their clinic folder"
     bucket_id = 'clinic-records' AND
     (storage.foldername(name))[1] = get_current_clinic_id()::text
   );
+
+-- ====================================================================
+-- MIGRATION FOR EXISTING CLINICS (Run this in Supabase SQL Editor):
+-- ====================================================================
+-- ALTER TABLE clinics 
+-- ADD COLUMN IF NOT EXISTS subscription_status TEXT CHECK (subscription_status IN ('active', 'suspended', 'grace_period')) DEFAULT 'active',
+-- ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '30 days');
+
