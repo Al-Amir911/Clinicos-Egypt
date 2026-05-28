@@ -16,7 +16,8 @@ export default function LoginPage() {
     password: "", 
     clinicName: "", 
     doctorName: "", 
-    fullName: "" 
+    fullName: "",
+    adminPassword: ""
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -138,6 +139,20 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={registerData.password}
                   onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="admin-password">رمز مرور المسؤول (التحقق من الهوية)</Label>
+                <Input 
+                  id="admin-password"
+                  type="password" 
+                  dir="ltr"
+                  className="text-left"
+                  placeholder="••••••••"
+                  value={registerData.adminPassword}
+                  onChange={(e) => setRegisterData({...registerData, adminPassword: e.target.value})}
                   required
                 />
               </div>

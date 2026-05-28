@@ -28,37 +28,36 @@ export function useAuth() {
   });
 
   const signUp = useMutation({
-     
-    mutationFn: async ({ email, password, clinicName, doctorName, fullName }: any) => {
-      // 1. Sign up user
-      const { data: authData, error: authError } = await supabase.auth.signUp({ 
-        email, 
-        password 
+    mutationFn: async ({ email, password, clinicName, doctorName, fullName, adminPassword }: any) => {
+      // Send registration request to our server-side API
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          clinicName,
+          doctorName,
+          fullName,
+          adminPassword,
+        }),
       });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("فشل إنشاء الحساب");
-      if (!authData.session) throw new Error("يرجى إيقاف خاصية (Confirm Email) من إعدادات Supabase Authentication والمحاولة بإيميل جديد.");
 
-      // 2. Insert clinic
-      const clinic_id = crypto.randomUUID();
-      const { error: clinicError } = await supabase
-        .from("clinics")
-        .insert({ id: clinic_id, name: clinicName, doctor_name: doctorName });
-      
-      if (clinicError) throw clinicError;
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "حدث خطأ أثناء إنشاء الحساب");
+      }
 
-      // 3. Insert profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          clinic_id: clinic_id,
-          role: "doctor",
-          full_name: fullName
-        });
+      // Automatically sign in client-side to establish the session
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (profileError) throw profileError;
-      return authData;
+      if (signInError) throw signInError;
+      return signInData;
     },
     onSuccess: () => {
       toast.success("تم إنشاء الحساب بنجاح! جاري التوجيه...");
