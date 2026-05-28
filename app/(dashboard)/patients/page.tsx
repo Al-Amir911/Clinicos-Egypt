@@ -156,8 +156,8 @@ export default function PatientsPage() {
               {filtered.map((patient) => (
                 <tr key={patient.id} className="border-b last:border-0 hover:bg-slate-50/50 transition-colors">
                   <td className="py-3 px-4 font-medium text-slate-900">{patient.name}</td>
-                  <td className="py-3 px-4 text-slate-600" dir="ltr">{patient.phone_number}</td>
-                  <td className="py-3 px-4 text-slate-600 hidden sm:table-cell" dir="ltr">{patient.national_id || "—"}</td>
+                  <td className="py-3 px-4 text-slate-600 text-right" dir="ltr">{patient.phone_number}</td>
+                  <td className="py-3 px-4 text-slate-600 text-right hidden sm:table-cell" dir="ltr">{patient.national_id || "—"}</td>
                   <td className="py-3 px-4 text-slate-500 hidden md:table-cell">
                     {patient.created_at ? new Date(patient.created_at).toLocaleDateString("ar-EG") : "—"}
                   </td>
