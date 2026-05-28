@@ -33,15 +33,22 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !request.nextUrl.pathname.startsWith("/login")) {
+  const path = request.nextUrl.pathname;
+
+  // Protect system routes
+  const protectedPaths = ["/dashboard", "/patients", "/calendar", "/settings", "/finance"];
+  const isProtected = protectedPaths.some((p) => path === p || path.startsWith(p + "/"));
+
+  if (!user && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
+  // Redirect logged-in users away from login to dashboard
+  if (user && path.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

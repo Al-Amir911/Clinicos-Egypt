@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 const navItems = [
-  { name: "الرئيسية", href: "/", icon: LayoutDashboard, isReady: true },
+  { name: "الرئيسية", href: "/dashboard", icon: LayoutDashboard, isReady: true },
   { name: "جدول الحجوزات", href: "/calendar", icon: Calendar, isReady: true },
   { name: "المرضى", href: "/patients", icon: Users, isReady: true },
   { name: "الحسابات", href: "/finance", icon: Wallet, isReady: true },

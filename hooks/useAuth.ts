@@ -19,7 +19,7 @@ export function useAuth() {
     },
     onSuccess: () => {
       toast.success("تم تسجيل الدخول بنجاح");
-      router.push("/");
+      router.push("/dashboard");
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
@@ -61,7 +61,7 @@ export function useAuth() {
     },
     onSuccess: () => {
       toast.success("تم إنشاء الحساب بنجاح! جاري التوجيه...");
-      router.push("/");
+      router.push("/dashboard");
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
