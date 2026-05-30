@@ -26,38 +26,15 @@ export function useQueue() {
   const supabase: any = createClient();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'appointments' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["appointmentsServer"] });
-          queryClient.invalidateQueries({ queryKey: ["appointments"] });
-          queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
-          queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'payments' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["dailyStatsServer"] });
-          queryClient.invalidateQueries({ queryKey: ["dailyStats"] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, supabase]);
+  // Removed the local supabase.channel subscription as it creates multiple conflicting channels
+  // and relies on Supabase Realtime being manually enabled on the tables.
+  // Instead, we will use robust polling (refetchInterval) on the queries below.
 
   // 1. Base server-only query
   const serverQuery = useQuery({
     queryKey: ["appointmentsServer"],
     networkMode: "always",
+    refetchInterval: 3000,
     queryFn: async () => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         return queryClient.getQueryData(["appointmentsServer"]) || [];
@@ -165,6 +142,7 @@ export function useScheduledAppointments() {
   return useQuery({
     queryKey: ["scheduledAppointments"],
     networkMode: "always",
+    refetchInterval: 5000,
     queryFn: async () => {
       try {
         if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -509,6 +487,7 @@ export function useDailyStats() {
   const serverStatsQuery = useQuery({
     queryKey: ["dailyStatsServer"],
     networkMode: "always",
+    refetchInterval: 5000,
     queryFn: async () => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         return queryClient.getQueryData(["dailyStatsServer"]) || {

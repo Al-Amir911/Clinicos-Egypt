@@ -55,6 +55,7 @@ function useAllPatients(searchTerm: string) {
   const serverPatientsQuery = useQuery({
     queryKey: ["allPatientsServer", searchTerm],
     networkMode: "always",
+    refetchInterval: 5000,
     queryFn: async (): Promise<PatientRow[]> => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         return queryClient.getQueryData(["allPatientsServer", searchTerm]) || [];
