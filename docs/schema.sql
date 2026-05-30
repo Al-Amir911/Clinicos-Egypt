@@ -64,6 +64,9 @@ CREATE TABLE appointments (
   is_paid BOOLEAN DEFAULT FALSE,
   payment_method TEXT CHECK (payment_method IN ('cash', 'instapay', NULL)),
   prescription_url TEXT, -- Link to Supabase Storage bucket
+  symptoms TEXT,
+  diagnosis TEXT,
+  prescription_rx JSONB,
   
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

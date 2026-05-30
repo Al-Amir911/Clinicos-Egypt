@@ -64,16 +64,16 @@ function useAllPatients(searchTerm: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
+      const { data: profile }: any = await supabase
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
-        .single() as { data: { clinic_id: string | null } | null };
+        .single();
 
       const clinic_id = profile?.clinic_id;
       if (!clinic_id) throw new Error("No clinic associated with user");
 
-      let query = supabase
+      let query: any = supabase
         .from("patients")
         .select("id, name, phone_number, national_id, created_at")
         .eq("clinic_id", clinic_id)
@@ -92,17 +92,10 @@ function useAllPatients(searchTerm: string) {
   });
 
   return useQuery({
-    queryKey: ["allPatients", searchTerm],
+    queryKey: ["allPatients", searchTerm, serverPatientsQuery.data],
     networkMode: "always",
     queryFn: async (): Promise<PatientRow[]> => {
-      if (typeof navigator !== "undefined" && navigator.onLine) {
-        await queryClient.ensureQueryData({
-          queryKey: ["allPatientsServer", searchTerm],
-          queryFn: serverPatientsQuery.refetch as any
-        });
-      }
-
-      const serverPatients = queryClient.getQueryData<PatientRow[]>(["allPatientsServer", searchTerm]) || [];
+      const serverPatients = serverPatientsQuery.data || [];
 
       // Merge offline patient edits
       const offlinePatientEdits = getOfflinePatientEdits();
@@ -125,12 +118,12 @@ function useAllPatients(searchTerm: string) {
 }
 
 function usePatientVisits(patientId: string, enabled: boolean) {
-  const supabase: any = createClient();
+  const supabase = createClient();
   return useQuery({
     queryKey: ["patientVisits", patientId],
     enabled: enabled && !!patientId,
     queryFn: async (): Promise<VisitRow[]> => {
-      const { data, error } = await supabase
+      const { data, error }: any = await supabase
         .from("appointments")
         .select("id, status, visit_type, created_at, completed_at, price, prescription_url, symptoms, diagnosis, prescription_rx")
         .eq("patient_id", patientId)

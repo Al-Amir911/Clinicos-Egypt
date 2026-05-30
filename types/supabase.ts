@@ -24,6 +24,9 @@ export interface Database {
           status: string | null
           visit_type: string | null
           notified: boolean
+          symptoms: string | null
+          diagnosis: string | null
+          prescription_rx: Json | null
         }
         Insert: {
           clinic_id: string
@@ -39,6 +42,9 @@ export interface Database {
           status?: string | null
           visit_type?: string | null
           notified?: boolean
+          symptoms?: string | null
+          diagnosis?: string | null
+          prescription_rx?: Json | null
         }
         Update: {
           clinic_id?: string
@@ -54,6 +60,9 @@ export interface Database {
           status?: string | null
           visit_type?: string | null
           notified?: boolean
+          symptoms?: string | null
+          diagnosis?: string | null
+          prescription_rx?: Json | null
         }
       }
       clinics: {
@@ -61,7 +70,7 @@ export interface Database {
           address: string | null
           created_at: string | null
           doctor_name: string
-          google_maps_url: string | null
+          location_url: string | null
           id: string
           name: string
           phone: string | null
@@ -73,7 +82,7 @@ export interface Database {
           address?: string | null
           created_at?: string | null
           doctor_name: string
-          google_maps_url?: string | null
+          location_url?: string | null
           id?: string
           name: string
           phone?: string | null
@@ -85,7 +94,7 @@ export interface Database {
           address?: string | null
           created_at?: string | null
           doctor_name?: string
-          google_maps_url?: string | null
+          location_url?: string | null
           id?: string
           name?: string
           phone?: string | null

@@ -24,7 +24,7 @@ export default function CalendarPage() {
 
   const workingHoursStart = settings?.working_hours_start || "09:00";
   const workingHoursEnd = settings?.working_hours_end || "18:00";
-  const slotDuration = settings?.slot_duration || 30;
+  const slotDuration = Math.max(5, settings?.slot_duration || 30);
 
   // Default to today if no date is selected
   const activeDate = selectedDate ? new Date(selectedDate) : new Date();

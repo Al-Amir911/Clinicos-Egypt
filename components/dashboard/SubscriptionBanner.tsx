@@ -8,9 +8,8 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useSettings } from "@/hooks/useQueue";
 
-// 1. Define custom settings (must match provider details)
-const ADMIN_INSTAPAY_ID = "01110203939"; 
-const ADMIN_WHATSAPP_NUMBER = "201025110560";
+const ADMIN_INSTAPAY_ID = process.env.NEXT_PUBLIC_ADMIN_INSTAPAY_ID || "01110203939"; 
+const ADMIN_WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER || "201025110560";
 
 export function SubscriptionBanner() {
   const { isWarning, daysRemaining, subscriptionExpiresAt } = useSubscription();

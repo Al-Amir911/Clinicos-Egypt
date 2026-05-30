@@ -16,7 +16,12 @@ const formSchema = z.object({
   location_url: z.string().url("رابط خريطة غير صحيح").optional().or(z.literal("")),
   working_hours_start: z.string().min(1, "مطلوب"),
   working_hours_end: z.string().min(1, "مطلوب"),
-  slot_duration: z.string().min(1, "مطلوب"),
+  slot_duration: z.string()
+    .min(1, "مطلوب")
+    .refine((val) => {
+      const parsed = parseInt(val);
+      return !isNaN(parsed) && parsed > 0;
+    }, "يجب أن تكون مدة الكشف رقماً موجباً أكبر من الصفر"),
 });
 
 export default function SettingsPage() {

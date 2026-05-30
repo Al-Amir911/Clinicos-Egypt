@@ -329,6 +329,8 @@ export function addOfflinePatientEdit(edit: OfflinePatientEdit) {
 
 // --- SYNCHRONIZATION ENGINE ---
 
+let isSyncing = false;
+
 export async function syncOfflineAppointments() {
   const hasAdditions = getOfflineAppointments().length > 0;
   const hasDeletions = getOfflineDeletions().length > 0;
@@ -341,211 +343,221 @@ export async function syncOfflineAppointments() {
     return;
   }
 
-  const supabase: any = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (isSyncing) {
+    console.log("Offline sync already in progress, skipping...");
+    return;
+  }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("clinic_id")
-    .eq("id", user.id)
-    .single() as any;
+  isSyncing = true;
+  try {
+    const supabase: any = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-  const clinic_id = profile?.clinic_id;
-  if (!clinic_id) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("clinic_id")
+      .eq("id", user.id)
+      .single() as any;
 
-  console.log("Starting chronological background sync...");
+    const clinic_id = profile?.clinic_id;
+    if (!clinic_id) return;
 
-  // 1. Sync additions (clinicos_offline_appointments)
-  const additions = getOfflineAppointments();
-  const failedAdditions: OfflineAppointment[] = [];
-  for (const appt of additions) {
-    try {
-      let patientId;
-      const { data: existingPatient } = await supabase
-        .from("patients")
-        .select("id")
-        .eq("phone_number", appt.patient.phone_number)
-        .eq("clinic_id", clinic_id)
-        .single() as any;
+    console.log("Starting chronological background sync...");
 
-      if (existingPatient) {
-        patientId = existingPatient.id;
-      } else {
-        const { data: newPatient, error: patientError } = await supabase
+    // 1. Sync additions (clinicos_offline_appointments)
+    const additions = getOfflineAppointments();
+    const failedAdditions: OfflineAppointment[] = [];
+    for (const appt of additions) {
+      try {
+        let patientId;
+        const { data: existingPatient } = await supabase
           .from("patients")
+          .select("id")
+          .eq("phone_number", appt.patient.phone_number)
+          .eq("clinic_id", clinic_id)
+          .single() as any;
+
+        if (existingPatient) {
+          patientId = existingPatient.id;
+        } else {
+          const { data: newPatient, error: patientError } = await supabase
+            .from("patients")
+            .insert({
+              name: appt.patient.name,
+              phone_number: appt.patient.phone_number,
+              clinic_id,
+            })
+            .select()
+            .single() as any;
+
+          if (patientError) throw patientError;
+          patientId = newPatient.id;
+        }
+
+        const isCompleted = appt.status === "completed";
+        const { data: newAppt, error: appointmentError } = await supabase
+          .from("appointments")
           .insert({
-            name: appt.patient.name,
-            phone_number: appt.patient.phone_number,
             clinic_id,
+            patient_id: patientId,
+            visit_type: appt.visit_type,
+            status: appt.status,
+            scheduled_time: appt.scheduled_time,
+            completed_at: isCompleted ? (appt.created_at || new Date().toISOString()) : null,
+            price: isCompleted ? appt.price : null,
+            is_paid: isCompleted ? appt.is_paid : null,
+            payment_method: isCompleted ? appt.payment_method : null,
           })
           .select()
           .single() as any;
 
-        if (patientError) throw patientError;
-        patientId = newPatient.id;
+        if (appointmentError) throw appointmentError;
+
+        if (isCompleted && appt.price) {
+          const { error: paymentError } = await supabase
+            .from("payments")
+            .insert({
+              clinic_id,
+              appointment_id: newAppt.id,
+              amount: appt.price,
+              method: appt.payment_method,
+              created_at: appt.created_at || new Date().toISOString(),
+            });
+          if (paymentError) throw paymentError;
+        }
+      } catch (err) {
+        console.error("Failed to sync additions:", appt, err);
+        failedAdditions.push(appt);
       }
+    }
+    saveOfflineAppointments(failedAdditions);
 
-      const isCompleted = appt.status === "completed";
-      const { data: newAppt, error: appointmentError } = await supabase
-        .from("appointments")
-        .insert({
-          clinic_id,
-          patient_id: patientId,
-          visit_type: appt.visit_type,
-          status: appt.status,
-          scheduled_time: appt.scheduled_time,
-          completed_at: isCompleted ? (appt.created_at || new Date().toISOString()) : null,
-          price: isCompleted ? appt.price : null,
-          is_paid: isCompleted ? appt.is_paid : null,
-          payment_method: isCompleted ? appt.payment_method : null,
-        })
-        .select()
-        .single() as any;
+    // 2. Sync patient edits (clinicos_offline_patient_edits)
+    const patientEdits = getOfflinePatientEdits();
+    const failedPatientEdits: OfflinePatientEdit[] = [];
+    for (const edit of patientEdits) {
+      try {
+        const { error } = await supabase
+          .from("patients")
+          .update({
+            name: edit.name,
+            phone_number: edit.phone_number,
+            national_id: edit.national_id,
+          })
+          .eq("id", edit.id);
+        if (error) throw error;
+      } catch (err) {
+        console.error("Failed to sync patient edit:", edit, err);
+        failedPatientEdits.push(edit);
+      }
+    }
+    saveOfflinePatientEdits(failedPatientEdits);
 
-      if (appointmentError) throw appointmentError;
+    // 3. Sync appointment edits (clinicos_offline_edits)
+    const edits = getOfflineEdits();
+    const failedEdits: OfflineEdit[] = [];
+    for (const edit of edits) {
+      try {
+        if (edit.name || edit.phone) {
+          const { error: patError } = await supabase
+            .from("patients")
+            .update({
+              name: edit.name,
+              phone_number: edit.phone,
+            })
+            .eq("id", edit.patientId);
+          if (patError) throw patError;
+        }
 
-      if (isCompleted && appt.price) {
+        const { error: apptError } = await supabase
+          .from("appointments")
+          .update({
+            visit_type: edit.visitType,
+            scheduled_time: edit.scheduled_time,
+          })
+          .eq("id", edit.id);
+        if (apptError) throw apptError;
+      } catch (err) {
+        console.error("Failed to sync appointment edit:", edit, err);
+        failedEdits.push(edit);
+      }
+    }
+    saveOfflineEdits(failedEdits);
+
+    // 4. Sync status updates (clinicos_offline_status_updates)
+    const statusUpdates = getOfflineStatusUpdates();
+    const failedStatusUpdates: OfflineStatusUpdate[] = [];
+    for (const update of statusUpdates) {
+      try {
+        const { error } = await supabase
+          .from("appointments")
+          .update({
+            status: update.status,
+            completed_at: update.completed_at,
+          })
+          .eq("id", update.id);
+        if (error) throw error;
+      } catch (err) {
+        console.error("Failed to sync status update:", update, err);
+        failedStatusUpdates.push(update);
+      }
+    }
+    saveOfflineStatusUpdates(failedStatusUpdates);
+
+    // 5. Sync payments (clinicos_offline_payments)
+    const payments = getOfflinePayments();
+    const failedPayments: OfflinePayment[] = [];
+    for (const pay of payments) {
+      try {
+        const { error: apptError } = await supabase
+          .from("appointments")
+          .update({
+            status: "completed",
+            completed_at: pay.created_at,
+            price: pay.amount,
+            is_paid: true,
+            payment_method: pay.method,
+          })
+          .eq("id", pay.appointmentId);
+        if (apptError) throw apptError;
+
         const { error: paymentError } = await supabase
           .from("payments")
           .insert({
             clinic_id,
-            appointment_id: newAppt.id,
-            amount: appt.price,
-            method: appt.payment_method,
-            created_at: appt.created_at || new Date().toISOString(),
+            appointment_id: pay.appointmentId,
+            amount: pay.amount,
+            method: pay.method,
+            created_at: pay.created_at,
           });
         if (paymentError) throw paymentError;
+      } catch (err) {
+        console.error("Failed to sync payment:", pay, err);
+        failedPayments.push(pay);
       }
-    } catch (err) {
-      console.error("Failed to sync additions:", appt, err);
-      failedAdditions.push(appt);
     }
-  }
-  saveOfflineAppointments(failedAdditions);
+    saveOfflinePayments(failedPayments);
 
-  // 2. Sync patient edits (clinicos_offline_patient_edits)
-  const patientEdits = getOfflinePatientEdits();
-  const failedPatientEdits: OfflinePatientEdit[] = [];
-  for (const edit of patientEdits) {
-    try {
-      const { error } = await supabase
-        .from("patients")
-        .update({
-          name: edit.name,
-          phone_number: edit.phone_number,
-          national_id: edit.national_id,
-        })
-        .eq("id", edit.id);
-      if (error) throw error;
-    } catch (err) {
-      console.error("Failed to sync patient edit:", edit, err);
-      failedPatientEdits.push(edit);
-    }
-  }
-  saveOfflinePatientEdits(failedPatientEdits);
-
-  // 3. Sync appointment edits (clinicos_offline_edits)
-  const edits = getOfflineEdits();
-  const failedEdits: OfflineEdit[] = [];
-  for (const edit of edits) {
-    try {
-      if (edit.name || edit.phone) {
-        const { error: patError } = await supabase
-          .from("patients")
-          .update({
-            name: edit.name,
-            phone_number: edit.phone,
-          })
-          .eq("id", edit.patientId);
-        if (patError) throw patError;
+    // 6. Sync deletions (clinicos_offline_deletions)
+    const deletions = getOfflineDeletions();
+    const failedDeletions: string[] = [];
+    for (const id of deletions) {
+      try {
+        const { error } = await supabase
+          .from("appointments")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+      } catch (err) {
+        console.error("Failed to sync deletion:", id, err);
+        failedDeletions.push(id);
       }
-
-      const { error: apptError } = await supabase
-        .from("appointments")
-        .update({
-          visit_type: edit.visitType,
-          scheduled_time: edit.scheduled_time,
-        })
-        .eq("id", edit.id);
-      if (apptError) throw apptError;
-    } catch (err) {
-      console.error("Failed to sync appointment edit:", edit, err);
-      failedEdits.push(edit);
     }
+    saveOfflineDeletions(failedDeletions);
+
+    console.log("Background sync finished successfully!");
+  } finally {
+    isSyncing = false;
   }
-  saveOfflineEdits(failedEdits);
-
-  // 4. Sync status updates (clinicos_offline_status_updates)
-  const statusUpdates = getOfflineStatusUpdates();
-  const failedStatusUpdates: OfflineStatusUpdate[] = [];
-  for (const update of statusUpdates) {
-    try {
-      const { error } = await supabase
-        .from("appointments")
-        .update({
-          status: update.status,
-          completed_at: update.completed_at,
-        })
-        .eq("id", update.id);
-      if (error) throw error;
-    } catch (err) {
-      console.error("Failed to sync status update:", update, err);
-      failedStatusUpdates.push(update);
-    }
-  }
-  saveOfflineStatusUpdates(failedStatusUpdates);
-
-  // 5. Sync payments (clinicos_offline_payments)
-  const payments = getOfflinePayments();
-  const failedPayments: OfflinePayment[] = [];
-  for (const pay of payments) {
-    try {
-      const { error: apptError } = await supabase
-        .from("appointments")
-        .update({
-          status: "completed",
-          completed_at: pay.created_at,
-          price: pay.amount,
-          is_paid: true,
-          payment_method: pay.method,
-        })
-        .eq("id", pay.appointmentId);
-      if (apptError) throw apptError;
-
-      const { error: paymentError } = await supabase
-        .from("payments")
-        .insert({
-          clinic_id,
-          appointment_id: pay.appointmentId,
-          amount: pay.amount,
-          method: pay.method,
-          created_at: pay.created_at,
-        });
-      if (paymentError) throw paymentError;
-    } catch (err) {
-      console.error("Failed to sync payment:", pay, err);
-      failedPayments.push(pay);
-    }
-  }
-  saveOfflinePayments(failedPayments);
-
-  // 6. Sync deletions (clinicos_offline_deletions)
-  const deletions = getOfflineDeletions();
-  const failedDeletions: string[] = [];
-  for (const id of deletions) {
-    try {
-      const { error } = await supabase
-        .from("appointments")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    } catch (err) {
-      console.error("Failed to sync deletion:", id, err);
-      failedDeletions.push(id);
-    }
-  }
-  saveOfflineDeletions(failedDeletions);
-
-  console.log("Background sync finished successfully!");
 }

@@ -85,7 +85,7 @@ export function useQueue() {
     queryKey: ["appointments", serverQuery.data],
     networkMode: "always",
     queryFn: async () => {
-      const serverAppts = serverQuery.data || [];
+      const serverAppts = (serverQuery.data as any[]) || [];
 
       // --- MERGE OFFLINE CHANGES ---
       const offlineAdditions = getOfflineAppointments();
@@ -190,7 +190,7 @@ export function useAddPatient() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
+      const { data: profile }: any = await supabase
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
@@ -200,7 +200,7 @@ export function useAddPatient() {
       if (!clinic_id) throw new Error("No clinic associated with user");
 
       let patientId;
-      const { data: existingPatient } = await supabase
+      const { data: existingPatient }: any = await supabase
         .from("patients")
         .select("id")
         .eq("phone_number", phone)
@@ -348,7 +348,7 @@ export function useLogPayment() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
+      const { data: profile }: any = await supabase
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
@@ -438,7 +438,7 @@ export function useUploadPrescription() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
+      const { data: profile }: any = await supabase
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
@@ -502,7 +502,7 @@ export function useDailyStats() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
+      const { data: profile }: any = await supabase
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
@@ -518,7 +518,7 @@ export function useDailyStats() {
       endOfDay.setHours(23, 59, 59, 999);
       const endOfDayISO = endOfDay.toISOString();
 
-      const { data: todayAppointments, error: apptError } = await supabase
+      const { data: todayAppointments, error: apptError }: any = await supabase
         .from("appointments")
         .select("id, status")
         .eq("clinic_id", clinic_id)
@@ -526,7 +526,7 @@ export function useDailyStats() {
 
       if (apptError) throw apptError;
 
-      const { data: payments, error: paymentError } = await supabase
+      const { data: payments, error: paymentError }: any = await supabase
         .from("payments")
         .select("amount, method")
         .eq("clinic_id", clinic_id)
@@ -670,7 +670,7 @@ export function useSettings() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Not authenticated");
 
-        const { data: profile } = await supabase
+        const { data: profile }: any = await supabase
           .from("profiles")
           .select("clinic_id")
           .eq("id", user.id)
@@ -710,7 +710,7 @@ export function useUpdateSettings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
+      const { data: profile }: any = await supabase
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
@@ -775,7 +775,7 @@ export function useUpdateAppointmentDetails() {
         return { id, patientId, name, phone, visitType, scheduled_time };
       }
 
-      const { data: originalPatient } = await supabase
+      const { data: originalPatient }: any = await supabase
         .from("patients")
         .select("name, phone_number")
         .eq("id", patientId)
