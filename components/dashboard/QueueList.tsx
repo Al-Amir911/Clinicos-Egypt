@@ -15,13 +15,13 @@ export function QueueList() {
   const completedPatients = queue.filter((p: any) => p.status === "completed");
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] min-h-[calc(100vh-220px)]">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-slate-900">طابور الانتظار</h2>
       </div>
 
       <Tabs defaultValue="waiting" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3 mb-6 bg-slate-100/50">
+        <TabsList className="grid w-full max-w-md grid-cols-3 mb-5 bg-slate-100/60 p-1 rounded-xl h-10">
           <TabsTrigger value="waiting" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
             في الانتظار ({waitingPatients.length})
           </TabsTrigger>

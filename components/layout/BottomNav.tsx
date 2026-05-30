@@ -32,7 +32,7 @@ export function BottomNav() {
               )}
             >
               <item.icon className={cn("w-6 h-6 mb-1", isActive && "fill-primary/20")} />
-              <span className="text-[10px] font-medium">{item.name}</span>
+              <span className="text-[11px] font-medium">{item.name}</span>
             </Link>
           );
         })}

@@ -59,6 +59,10 @@ export function GlobalSearch() {
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      if (target.closest('[role="dialog"]') || target.closest('[data-radix-popper-content-wrapper]')) {
+        return;
+      }
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -68,8 +72,8 @@ export function GlobalSearch() {
   }, []);
 
   return (
-    <div className="relative max-w-md w-full ml-4" ref={wrapperRef}>
-      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+    <div className="relative max-w-xs w-full ml-4" ref={wrapperRef}>
+      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400/80 pointer-events-none" />
       <input
         type="text"
         placeholder="ابحث برقم الهاتف أو الاسم..."
@@ -79,7 +83,7 @@ export function GlobalSearch() {
           setIsOpen(true);
         }}
         onFocus={() => setIsOpen(true)}
-        className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+        className="w-full bg-slate-100/50 hover:bg-slate-100/80 border border-transparent hover:border-slate-200/50 focus:border-primary focus:bg-white rounded-xl pr-9 pl-4 py-1.5 text-xs focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all duration-200"
       />
       
       {isOpen && debouncedSearchTerm.length >= 2 && (

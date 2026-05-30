@@ -151,7 +151,7 @@ export default function FinancePage() {
               placeholder="فلتر بالاسم..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full bg-white border border-slate-300 rounded-lg pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right font-extrabold text-slate-950 placeholder:text-slate-500"
+              className="w-full bg-white border border-slate-300 rounded-lg pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right font-bold text-slate-950 placeholder:text-slate-500"
               dir="rtl"
             />
           </div>
@@ -160,7 +160,7 @@ export default function FinancePage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right font-extrabold text-slate-950"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right font-bold text-slate-950"
               dir="rtl"
             />
           </div>
@@ -170,7 +170,7 @@ export default function FinancePage() {
           <button
             type="button"
             onClick={() => setMethodFilter("all")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               methodFilter === "all" ? "bg-white text-blue-900 border border-slate-200/50 shadow-sm" : "text-slate-800 hover:text-slate-950"
             }`}
           >
@@ -179,7 +179,7 @@ export default function FinancePage() {
           <button
             type="button"
             onClick={() => setMethodFilter("cash")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               methodFilter === "cash" ? "bg-white text-blue-900 border border-slate-200/50 shadow-sm" : "text-slate-800 hover:text-slate-950"
             }`}
           >
@@ -188,7 +188,7 @@ export default function FinancePage() {
           <button
             type="button"
             onClick={() => setMethodFilter("instapay")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               methodFilter === "instapay" ? "bg-white text-blue-900 border border-slate-200/50 shadow-sm" : "text-slate-800 hover:text-slate-950"
             }`}
           >
@@ -202,12 +202,12 @@ export default function FinancePage() {
         <Card className="border-dashed border-2 shadow-none bg-slate-50/50">
           <CardContent className="flex flex-col items-center justify-center py-16 text-slate-500">
             <Wallet className="w-12 h-12 mb-4 text-slate-400" />
-            <p className="font-extrabold text-slate-800">لا توجد معاملات مالية مطابقة</p>
+            <p className="font-bold text-slate-800">لا توجد معاملات مالية مطابقة</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          <h4 className="text-sm font-black text-slate-900 pr-1">تفاصيل فواتير اليوم:</h4>
+          <h4 className="text-sm font-bold text-slate-900 pr-1">تفاصيل فواتير اليوم:</h4>
           <div className="flex flex-col gap-2">
             {displayPayments.map((payment: any) => (
               <div 
@@ -216,11 +216,11 @@ export default function FinancePage() {
               >
                 {/* Right Side: Patient Name & Visit details */}
                 <div className="text-right">
-                  <h5 className="font-extrabold text-slate-950 text-sm sm:text-base">
+                  <h5 className="font-bold text-slate-950 text-sm sm:text-base">
                     {payment.appointment?.patient?.name || "—"}
                   </h5>
                   <p className="text-xs text-slate-805 mt-1.5 flex items-center gap-1.5 font-bold">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                       payment.appointment?.visit_type === "consultation" 
                         ? "bg-blue-50 text-blue-900 border border-blue-200" 
                         : "bg-purple-50 text-purple-900 border border-purple-200"
@@ -238,7 +238,7 @@ export default function FinancePage() {
 
                 {/* Left Side: Method badge & price */}
                 <div className="flex items-center gap-3.5 text-left">
-                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                  <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider ${
                     payment.method === "instapay" 
                       ? "bg-emerald-50 text-emerald-950 border border-emerald-300" 
                       : "bg-slate-100 text-slate-900 border border-slate-300"

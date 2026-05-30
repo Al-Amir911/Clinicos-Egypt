@@ -251,7 +251,7 @@ export function QueueCard({
                     >
                       <FileText className="w-4 h-4" /> الكشف والروشتة
                     </Button>
-                    <Button size="sm" variant="secondary" className="gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200" onClick={(e) => {
+                    <Button size="sm" variant="secondary" className="gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={(e) => {
                       e.stopPropagation();
                       setIsPaymentModalOpen(true);
                     }} disabled={isUpdating}>

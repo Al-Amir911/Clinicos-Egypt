@@ -90,7 +90,7 @@ export default function CalendarPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">جدول الحجوزات</h1>
-            <p className="text-slate-500 text-sm">عرض المواعيد المتاحة والمحجوزة</p>
+            <p className="text-slate-500 text-sm font-medium">عرض المواعيد المتاحة والمحجوزة</p>
           </div>
         </div>
         <div className="w-full sm:w-auto flex items-center gap-2">
@@ -137,14 +137,14 @@ export default function CalendarPage() {
                         <div className="text-sm text-slate-500">{apt.patient.phone_number}</div>
                      </div>
                      <div className="flex flex-col items-end gap-1">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                           apt.visit_type === 'consultation' 
                             ? 'bg-blue-50 text-blue-700' 
                             : 'bg-emerald-50 text-emerald-700'
                         }`}>
                           {apt.visit_type === 'consultation' ? 'كشف جديد' : 'إعادة'}
                         </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                           apt.status === 'completed' 
                             ? 'bg-slate-100 text-slate-600'
                             : 'bg-amber-50 text-amber-700'

@@ -16,7 +16,7 @@ export default function DashboardLayout({
         <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
           <SubscriptionBanner />
           <Header />
-          <main className="flex-1 p-4 md:p-6 lg:p-8">
+          <main className="flex-1 pt-2 pb-6 px-4 md:pt-3 md:pb-8 md:px-6 lg:pt-4 lg:pb-8 lg:px-8">
             {children}
           </main>
         </div>

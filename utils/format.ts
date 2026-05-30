@@ -33,3 +33,23 @@ export function formatEgyptianPhoneForWhatsApp(phone: string | null | undefined)
   // 3. Fallback: Return stripped digits (might not be a valid Egyptian mobile, but safe for API)
   return digitsOnly;
 }
+
+/**
+ * Extracts initials from an Arabic name (e.g. "عمر محمد الأمير" -> "ع أ").
+ * If the name is empty, returns empty string.
+ * If single name, returns first character.
+ * If multiple names, returns first character of first name and first character of last name.
+ * 
+ * @param name The Arabic name string
+ * @returns The formatted initials (e.g., "ع أ")
+ */
+export function getArabicInitials(name: string | null | undefined): string {
+  if (!name) return "";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0].charAt(0);
+  
+  const firstInitial = parts[0].charAt(0);
+  const lastInitial = parts[parts.length - 1].charAt(0);
+  return `${firstInitial} ${lastInitial}`;
+}

@@ -340,13 +340,7 @@ function PatientsWorkstation() {
     window.open(url, "_blank");
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Removed global isLoading block to prevent search input from losing focus
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -355,7 +349,7 @@ function PatientsWorkstation() {
           <Users className="w-6 h-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-950 font-sans">عيادة الطبيب ودليل المرضى</h1>
+          <h1 className="text-2xl font-bold text-slate-950 font-sans">دليل المرضى</h1>
           <p className="text-slate-800 text-sm font-medium">عرض ملفات المرضى، كتابة الروشتات الرقمية ومتابعة زياراتهم</p>
         </div>
       </div>
@@ -371,15 +365,19 @@ function PatientsWorkstation() {
               placeholder="ابحث عن مريض بالاسم أو الهاتف..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-350 rounded-xl pr-10 pl-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right font-extrabold text-slate-950 placeholder:text-slate-500"
+              className="w-full bg-slate-50 border border-slate-350 rounded-xl pr-10 pl-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right font-bold text-slate-950 placeholder:text-slate-500"
               dir="rtl"
             />
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-2 pr-1" dir="rtl">
-            <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider block mb-1">اضغط لاختيار مريض:</span>
-            {patients.length === 0 ? (
-              <div className="text-center py-12 text-slate-700 font-extrabold text-xs">
+            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">اضغط لاختيار مريض:</span>
+            {isLoading ? (
+              <div className="text-center py-12 flex justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : patients.length === 0 ? (
+              <div className="text-center py-12 text-slate-700 font-bold text-sm">
                 لا يوجد مرضى مطابقين للبحث
               </div>
             ) : (
@@ -399,10 +397,10 @@ function PatientsWorkstation() {
                     }`}
                   >
                     <div className="text-right">
-                      <h5 className={`font-bold text-xs ${isSelected ? "text-blue-800" : "text-slate-800"}`}>
+                      <h5 className={`font-bold text-sm ${isSelected ? "text-blue-800" : "text-slate-800"}`}>
                         {p.name}
                       </h5>
-                      <p className="text-[10px] text-slate-700 mt-1 font-bold">
+                      <p className="text-[11px] text-slate-700 mt-1 font-medium">
                         الهاتف: {p.phone_number} • التسجيل: {p.created_at ? new Date(p.created_at).toLocaleDateString("ar-EG") : "—"}
                       </p>
                     </div>
@@ -428,9 +426,9 @@ function PatientsWorkstation() {
                   <div className="text-right">
                     <div className="flex items-center gap-2">
                       <h4 className="font-extrabold text-slate-950 text-sm sm:text-base">{selectedPatient.name}</h4>
-                      <span className="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">ملف طبي نشط</span>
+                      <span className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-semibold">ملف طبي نشط</span>
                     </div>
-                    <p className="text-xs text-slate-800 mt-0.5 font-bold">الهاتف: {selectedPatient.phone_number} • الرقم القومي: {selectedPatient.national_id || "—"}</p>
+                    <p className="text-sm text-slate-600 mt-0.5 font-medium">الهاتف: {selectedPatient.phone_number} • الرقم القومي: {selectedPatient.national_id || "—"}</p>
                   </div>
                 </div>
                 
@@ -486,7 +484,7 @@ function PatientsWorkstation() {
                   
                   {/* Sliding visits timeline buttons */}
                   <div className="flex items-center gap-2 border-b border-slate-100 pb-3 flex-wrap" dir="rtl">
-                    <span className="text-xs font-black text-slate-900">تاريخ الكشوفات والزيارات:</span>
+                    <span className="text-sm font-bold text-slate-900">تاريخ الكشوفات والزيارات:</span>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-full">
                       {visits.map((visit) => {
                         const isSelected = visit.id === activeVisit?.id;
@@ -496,7 +494,7 @@ function PatientsWorkstation() {
                             key={visit.id}
                             type="button"
                             onClick={() => setSelectedVisitId(visit.id)}
-                            className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all flex-shrink-0 flex items-center gap-1 ${
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all flex-shrink-0 flex items-center gap-1 ${
                               isSelected 
                                 ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-xs" 
                                 : "bg-slate-50 text-slate-800 border border-transparent hover:bg-slate-100"
@@ -518,7 +516,7 @@ function PatientsWorkstation() {
                       <button
                         type="button"
                         onClick={() => setPrescriptionMode("digital")}
-                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                        className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
                           prescriptionMode === "digital" ? "bg-white text-blue-600 shadow-xs" : "text-slate-800 hover:text-slate-950"
                         }`}
                       >
@@ -527,7 +525,7 @@ function PatientsWorkstation() {
                       <button
                         type="button"
                         onClick={() => setPrescriptionMode("paper")}
-                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                        className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
                           prescriptionMode === "paper" ? "bg-white text-blue-600 shadow-xs" : "text-slate-800 hover:text-slate-950"
                         }`}
                       >
@@ -535,7 +533,7 @@ function PatientsWorkstation() {
                       </button>
                     </div>
 
-                    <span className="text-xs font-bold text-slate-850">حالة الزيارة: {activeVisit?.status === "completed" ? "مكتملة ✅" : "في الانتظار ⏳"}</span>
+                    <span className="text-sm font-medium text-slate-700">حالة الزيارة: {activeVisit?.status === "completed" ? "مكتملة ✅" : "في الانتظار ⏳"}</span>
                   </div>
 
                   {/* Mode specific component view */}
@@ -547,24 +545,24 @@ function PatientsWorkstation() {
                         {/* Symptoms & Diagnosis textarea grids */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5 text-right">
-                            <label className="text-xs font-black text-slate-950 block mb-1">الشكوى الحالية والتحاليل (Symptoms):</label>
+                            <label className="text-sm font-bold text-slate-950 block mb-1">الشكوى الحالية والتحاليل (Symptoms):</label>
                             <textarea
                               value={draftSymptoms}
                               onChange={(e) => setDraftSymptoms(e.target.value)}
                               placeholder="مثال: صداع مستمر منذ يومين مع ارتفاع طفيف في درجات الحرارة..."
                               rows={2.5}
-                              className="w-full text-xs bg-slate-50 border border-slate-350 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors text-right font-bold text-slate-950 placeholder:text-slate-500"
+                              className="w-full text-sm bg-slate-50 border border-slate-350 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors text-right font-medium text-slate-950 placeholder:text-slate-500"
                               dir="rtl"
                             />
                           </div>
                           <div className="space-y-1.5 text-right">
-                            <label className="text-xs font-black text-slate-950 block mb-1">التشخيص الحالي (Diagnosis):</label>
+                            <label className="text-sm font-bold text-slate-950 block mb-1">التشخيص الحالي (Diagnosis):</label>
                             <textarea
                               value={draftDiagnosis}
                               onChange={(e) => setDraftDiagnosis(e.target.value)}
                               placeholder="مثال: التهاب جيوب أنفية حاد نتيجة تقلب الجو موسمياً..."
                               rows={2.5}
-                              className="w-full text-xs bg-slate-50 border border-slate-350 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors text-right font-bold text-slate-950 placeholder:text-slate-500"
+                              className="w-full text-sm bg-slate-50 border border-slate-350 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors text-right font-medium text-slate-950 placeholder:text-slate-500"
                               dir="rtl"
                             />
                           </div>
@@ -572,11 +570,11 @@ function PatientsWorkstation() {
 
                         {/* Rx Medication structured builder */}
                         <div className="space-y-2 text-right">
-                          <label className="text-xs font-black text-slate-950 block mb-1">الروشتة الدوائية الموصوفة (Rx):</label>
+                          <label className="text-sm font-bold text-slate-950 block mb-1">الروشتة الدوائية الموصوفة (Rx):</label>
                           
                           {/* Medicine entries list */}
                           {draftRx.length > 0 ? (
-                            <div className="border border-slate-300 rounded-xl overflow-hidden shadow-xs text-[11px]" dir="rtl">
+                            <div className="border border-slate-300 rounded-xl overflow-hidden shadow-xs text-xs" dir="rtl">
                               <div className="bg-slate-50/80 px-3 py-2 border-b border-slate-300 grid grid-cols-12 font-bold text-slate-900 text-right">
                                 <div className="col-span-5">اسم الدواء</div>
                                 <div className="col-span-4">الجرعة المحددة</div>
@@ -603,7 +601,7 @@ function PatientsWorkstation() {
                               </div>
                             </div>
                           ) : (
-                            <div className="border border-slate-200 bg-slate-50/30 rounded-xl p-4 text-center text-[10px] text-slate-600 font-semibold">
+                            <div className="border border-slate-200 bg-slate-50/30 rounded-xl p-4 text-center text-xs text-slate-600 font-medium">
                               لا يوجد أدوية مضافة في الروشتة الرقمية بعد. استخدم النموذج أدناه لإضافة الأدوية.
                             </div>
                           )}
@@ -611,33 +609,33 @@ function PatientsWorkstation() {
                           {/* Medicine adding inputs row */}
                           <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-300 flex flex-col sm:flex-row gap-2.5 items-end" dir="rtl">
                             <div className="flex-1 space-y-1 w-full text-right">
-                              <span className="text-[10px] font-black text-slate-900">اسم الدواء (العلمي/التجاري):</span>
+                              <span className="text-[11px] font-bold text-slate-900">اسم الدواء (العلمي/التجاري):</span>
                               <input
                                 type="text"
                                 placeholder="مثال: Panadol Joint"
                                 value={newMedName}
                                 onChange={(e) => setNewMedName(e.target.value)}
-                                className="w-full text-xs bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/20 text-right font-extrabold text-slate-950 placeholder:text-slate-500"
+                                className="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-primary/20 text-right font-medium text-slate-950 placeholder:text-slate-500"
                               />
                             </div>
                             <div className="w-full sm:w-1/3 space-y-1 text-right">
-                              <span className="text-[10px] font-black text-slate-900">الجرعة:</span>
+                              <span className="text-[11px] font-bold text-slate-900">الجرعة:</span>
                               <input
                                 type="text"
                                 placeholder="قرص كل 8 ساعات"
                                 value={newMedDose}
                                 onChange={(e) => setNewMedDose(e.target.value)}
-                                className="w-full text-xs bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/20 text-right font-extrabold text-slate-950 placeholder:text-slate-500"
+                                className="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-primary/20 text-right font-medium text-slate-950 placeholder:text-slate-500"
                               />
                             </div>
                             <div className="w-full sm:w-1/4 space-y-1 text-right">
-                              <span className="text-[10px] font-black text-slate-900">الفترة:</span>
+                              <span className="text-[11px] font-bold text-slate-900">الفترة:</span>
                               <input
                                 type="text"
                                 placeholder="3 أيام"
                                 value={newMedDuration}
                                 onChange={(e) => setNewMedDuration(e.target.value)}
-                                className="w-full text-xs bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/20 text-right font-extrabold text-slate-950 placeholder:text-slate-500"
+                                className="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-primary/20 text-right font-medium text-slate-950 placeholder:text-slate-500"
                               />
                             </div>
                             <Button 
@@ -658,7 +656,7 @@ function PatientsWorkstation() {
                             variant="outline"
                             onClick={handleSendWhatsAppPrescription}
                             disabled={draftRx.length === 0 && !draftDiagnosis}
-                            className="flex items-center gap-1.5 border-emerald-300 hover:bg-emerald-50/50 hover:border-emerald-450 text-emerald-800 font-extrabold text-xs py-1.5 h-9 rounded-lg"
+                            className="flex items-center gap-1.5 border-emerald-300 hover:bg-emerald-50/50 hover:border-emerald-450 text-emerald-800 font-bold text-sm py-1.5 h-9 rounded-lg"
                           >
                             <WhatsAppIcon className="w-4 h-4 text-emerald-600" />
                             إرسال عبر واتساب
@@ -718,7 +716,7 @@ function PatientsWorkstation() {
                           <div className="border border-dashed border-slate-400 rounded-2xl p-10 text-center flex flex-col items-center justify-center bg-slate-50/50">
                             <Camera className="w-10 h-10 text-slate-500 mb-2.5" />
                             <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm">رفع صورة الروشتة الورقية</h5>
-                            <p className="text-[10px] text-slate-700 font-semibold mt-1 max-w-[240px] mx-auto leading-relaxed">
+                            <p className="text-xs text-slate-600 font-medium mt-1 max-w-[260px] mx-auto leading-relaxed">
                               التقط صورة للروشتة الورقية المكتوبة بخط اليد لربطها بملف المريض والرجوع إليها لاحقاً.
                             </p>
                             <Button 
@@ -738,7 +736,7 @@ function PatientsWorkstation() {
                   {/* Previous records & uploaded files attachments list */}
                   {visits.filter(v => v.prescription_url).length > 0 && (
                     <div className="space-y-2 border-t border-slate-100 pt-3 flex-shrink-0 text-right" dir="rtl">
-                      <span className="text-xs font-black text-slate-900 block">المرفقات والروشتات السابقة للمريض:</span>
+                      <span className="text-sm font-bold text-slate-900 block">المرفقات والروشتات السابقة للمريض:</span>
                       <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 max-h-[85px]">
                         {visits
                           .filter(v => v.prescription_url)
@@ -752,8 +750,8 @@ function PatientsWorkstation() {
                               >
                                 <FileText className="w-6 h-6 text-red-500 flex-shrink-0" />
                                 <div className="text-right">
-                                  <h6 className="font-bold text-[9px] text-slate-950 leading-tight">روشتة ورقية — {date.toLocaleDateString("ar-EG")}</h6>
-                                  <p className="text-[7.5px] text-slate-700 font-bold mt-0.5">{v.visit_type === "consultation" ? "كشف" : "إعادة"}</p>
+                                  <h6 className="font-bold text-[11px] text-slate-950 leading-tight">روشتة ورقية — {date.toLocaleDateString("ar-EG")}</h6>
+                                  <p className="text-[10px] text-slate-600 font-medium mt-0.5">{v.visit_type === "consultation" ? "كشف" : "إعادة"}</p>
                                 </div>
                               </div>
                             );
